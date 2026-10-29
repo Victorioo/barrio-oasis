@@ -1,0 +1,16 @@
+# --- Demo local: contiene datos personales reales de los vecinos. NUNCA subir ---
+web/demo-datos.js
+web/demo.html
+web/demo-stub.js
+
+# --- Datos y secretos ---
+*.csv
+!scripts/ejemplo-tally.csv
+.env
+.env.*
+*.key
+
+# --- Sistema ---
+.DS_Store
+node_modules/
+.claude/

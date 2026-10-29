@@ -1,0 +1,5 @@
+Submission ID,Respondent ID,Submitted at,Número de teléfono,Número de manzana,Número de lote,Patente 1,Marca 1,Modelo 1,Color 1,Patente 2,Marca 2,Modelo 2,Color 2,Patente 3,Patente 4,Patente 5
+a1,r1,2026-10-01 10:00:00,351 555-1234,5,12,ab 123 cd,Toyota,Corolla,Gris,AC-456-DE,Ford,Fiesta,Rojo,,,
+a2,r2,2026-10-02 11:00:00,"351 555-9999",7,3,"ABC 123",Volkswagen,Gol,Blanco,,,,,,,
+a3,r3,2026-10-02 12:00:00,,12A,1,xx,Fiat,Uno,Negro,,,,,,,
+a4,r4,2026-10-03 09:00:00,351 555-0000,5,12,AB123CD,,,,,,,,,,

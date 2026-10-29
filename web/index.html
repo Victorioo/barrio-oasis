@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Garita">
+  <title>Garita Oasis</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="preload" href="fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/ibm-plex-mono-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Íconos lineales (24x24, trazo 2) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+    <symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-in" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
+    <symbol id="i-arrow-in" viewBox="0 0 24 24"><path d="M17 7 7 17M17 17H7V7"/></symbol>
+    <symbol id="i-arrow-out" viewBox="0 0 24 24"><path d="M7 17 17 7M7 7h10v10"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5M12 7v5l4 2"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M12 20h.01M2 8.82a15 15 0 0 1 20 0M5 12.86a10 10 0 0 1 14 0M8.5 16.43a5 5 0 0 1 7 0"/></symbol>
+    <symbol id="i-wifi-off" viewBox="0 0 24 24"><path d="M12 20h.01M8.5 16.43a5 5 0 0 1 7 0M2 8.82a15 15 0 0 1 4.17-2.65M10.66 5c4.01-.36 8.14.9 11.34 3.76M16.85 11.25a10 10 0 0 1 2.22 1.68M5 12.86a10 10 0 0 1 5.17-2.69M2 2l20 20"/></symbol>
+    <symbol id="i-upload-cloud" viewBox="0 0 24 24"><path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M12 12v9M8 16l4-4 4 4"/></symbol>
+    <symbol id="i-backspace" viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/><path d="m18 9-6 6M12 9l6 6"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
+  </svg>
+
+  <!-- ============ LOGIN (PIN de guardia) ============ -->
+  <main id="vista-login" class="login-fondo" hidden><div class="login">
+    <div class="marca">
+      <span class="logo logo-l"><svg class="i"><use href="#i-shield-check"/></svg></span>
+      <div>
+        <h1 class="marca-titulo">Barrio Oasis</h1>
+        <p class="marca-sub">Seguridad y accesos · Córdoba</p>
+      </div>
+    </div>
+
+    <div class="segmento" role="group" aria-label="Tipo de usuario">
+      <button type="button" id="seg-vecino" aria-pressed="false"><svg class="i"><use href="#i-home"/></svg>Soy vecino</button>
+      <button type="button" id="seg-guardia" aria-pressed="true"><svg class="i"><use href="#i-shield"/></svg>Soy guardia</button>
+    </div>
+
+    <div id="aviso-vecino" class="card aviso-vecino" hidden>
+      <p><strong>El ingreso para vecinos todavía no está disponible.</strong></p>
+      <p>Por ahora solo puede usarse el acceso de guardia.</p>
+    </div>
+
+    <form id="form-login" class="login-form">
+      <div class="login-titulos">
+        <h2>Ingresá tu PIN de guardia</h2>
+        <p>Garita principal</p>
+      </div>
+
+      <div id="pin-puntos" class="pin-puntos" role="status" aria-label="0 de 6 números ingresados"></div>
+
+      <div id="teclado" class="teclado"></div>
+
+      <p id="login-error" class="error" role="alert"></p>
+      <button id="btn-entrar" class="btn btn-primario" type="submit">Entrar a la garita</button>
+    </form>
+  </div></main>
+
+  <!-- ============ APP ============ -->
+  <div id="vista-app" hidden>
+
+    <!-- Pantalla principal: consultar -->
+    <section id="pantalla-principal">
+      <header class="top">
+        <span class="logo"><svg class="i"><use href="#i-shield"/></svg></span>
+        <div class="top-texto">
+          <p class="top-titulo">Garita Oasis</p>
+          <button id="turno" class="top-sub" type="button"></button>
+        </div>
+        <span class="conexion" data-conexion role="status"></span>
+      </header>
+
+      <div id="banner-offline" class="banner" role="status" hidden>
+        <svg class="i"><use href="#i-upload-cloud"/></svg>
+        <div>
+          <p id="banner-titulo" class="banner-titulo"></p>
+          <p class="banner-sub">Podés seguir registrando. Se suben solos al volver la señal.</p>
+        </div>
+      </div>
+
+      <main class="pantalla">
+        <form id="form-buscar" class="card buscar" autocomplete="off">
+          <label class="buscar-titulo" for="patente">Patente del auto en la barrera</label>
+          <div class="patente-input">
+            <div class="patente-banda" aria-hidden="true"><span>REPÚBLICA ARGENTINA</span><span class="bandera"></span></div>
+            <input id="patente" type="text" inputmode="text" autocapitalize="characters" autocorrect="off"
+                   spellcheck="false" maxlength="12" enterkeyhint="search" autocomplete="off" placeholder="AB 123 CD">
+          </div>
+          <p class="ayuda">Formato nuevo (AB 123 CD) o viejo (ABC 123).</p>
+          <button class="btn btn-primario btn-xl" type="submit"><svg class="i"><use href="#i-search"/></svg>Consultar</button>
+        </form>
+
+        <section>
+          <div class="seccion-cab">
+            <h2>Movimientos de hoy</h2>
+            <p id="total-hoy"></p>
+          </div>
+          <ul id="lista" class="card tabla"></ul>
+        </section>
+
+        <button id="btn-salir" class="cerrar-turno" type="button"><svg class="i"><use href="#i-logout"/></svg>Cerrar turno</button>
+      </main>
+    </section>
+
+    <!-- Pantalla de resultado -->
+    <section id="pantalla-resultado" hidden>
+      <div class="volver-fila">
+        <button id="btn-volver" class="volver" type="button"><svg class="i"><use href="#i-chevron-left"/></svg>Nueva consulta</button>
+        <span class="conexion" data-conexion role="status"></span>
+      </div>
+      <main id="resultado" class="pantalla pantalla-resultado" aria-live="polite"></main>
+
+      <div class="barra-acciones">
+        <button id="btn-nueva" class="btn btn-primario btn-xl" type="button" hidden><svg class="i"><use href="#i-search"/></svg>Nueva consulta</button>
+        <div id="acciones" class="acciones">
+          <button id="btn-entrada" class="btn btn-accion es-primario" type="button"><svg class="i"><use href="#i-in"/></svg>Registrar entrada</button>
+          <button id="btn-salida" class="btn btn-accion btn-contorno" type="button"><svg class="i"><use href="#i-out"/></svg>Registrar salida</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <datalist id="lista-marcas">
+    <option value="Fiat"><option value="Volkswagen"><option value="Chevrolet"><option value="Renault"><option value="Ford">
+    <option value="Peugeot"><option value="Citroën"><option value="Toyota"><option value="Honda"><option value="Nissan">
+    <option value="Jeep"><option value="Hyundai"><option value="Kia"><option value="Suzuki"><option value="Chery">
+    <option value="Mercedes-Benz"><option value="BMW"><option value="Audi"><option value="Mitsubishi"><option value="Moto">
+  </datalist>
+  <datalist id="lista-colores">
+    <option value="Blanco"><option value="Negro"><option value="Gris"><option value="Plata"><option value="Rojo">
+    <option value="Azul"><option value="Verde"><option value="Amarillo"><option value="Naranja"><option value="Marrón">
+    <option value="Beige"><option value="Bordó">
+  </datalist>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="vendor/supabase.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
