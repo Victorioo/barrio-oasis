@@ -1,7 +1,7 @@
 // Service worker: deja la app (HTML/JS/CSS) disponible sin señal.
 // Los datos (patentes, movimientos) viven en IndexedDB, no acá.
 // Al publicar una versión nueva, subí el número de CACHE.
-const CACHE = 'garita-v37';
+const CACHE = 'garita-v38';
 const ARCHIVOS = [
   './',
   'index.html',
@@ -67,7 +67,7 @@ self.addEventListener('fetch', (e) => {
 self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch { /* sin cuerpo */ }
-  e.waitUntil(self.registration.showNotification(d.titulo || 'Garita Oasis', {
+  e.waitUntil(self.registration.showNotification(d.titulo || 'Seguridad Oasis', {
     body: d.cuerpo || '',
     icon: 'icons/icon-192.png',
     badge: 'icons/icon-192.png',
