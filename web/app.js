@@ -5,7 +5,7 @@ import {
   turnoDelDia, fechaCorta, hhmm,
 } from './logic.js';
 
-const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) =>
@@ -692,7 +692,8 @@ async function iniciar() {
     ({ data: { session: sesion } } = await sb.auth.getSession());
   } catch { /* sin señal */ }
 
-  if (sesion || (!navigator.onLine && haySesionGuardada())) mostrarApp();
+  // Si hay una sesión guardada y no se pudo renovar por falta/mala señal, se entra igual (no se pide el PIN de nuevo).
+  if (sesion || haySesionGuardada()) mostrarApp();
   else mostrarLogin();
 
   setInterval(() => { if (!$('vista-app').hidden) sincronizar(); }, 300000);

@@ -3,7 +3,7 @@
 import { CONFIG } from './config.js';
 import { normalizarPatente, formatearPatente, colorCss, fechaCorta, hhmm } from './logic.js';
 
-const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } });
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -384,6 +384,11 @@ async function mostrarApp() {
   cargar();
 }
 
+// Sin señal getSession puede no poder renovar el token: si ya había una sesión guardada, seguimos.
+function haySesionGuardada() {
+  try { return Object.keys(localStorage).some((k) => /^sb-.*-auth-token$/.test(k)); } catch { return false; }
+}
+
 async function iniciar() {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(console.warn);
   armarTeclado();
@@ -399,7 +404,7 @@ async function iniciar() {
 
   let sesion = null;
   try { ({ data: { session: sesion } } = await sb.auth.getSession()); } catch { /* sin señal */ }
-  if (sesion?.user?.app_metadata?.rol === 'vecino') mostrarApp();
+  if (sesion?.user?.app_metadata?.rol === 'vecino' || (!sesion && haySesionGuardada())) mostrarApp();
   else mostrarLogin();
 }
 iniciar();
