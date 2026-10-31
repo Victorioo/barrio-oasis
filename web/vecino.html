@@ -16,8 +16,7 @@
             rol = s && s.user && s.user.app_metadata && s.user.app_metadata.rol || null;
           }
         }
-        if (!rol) rol = localStorage.getItem('rol');
-        if (rol === 'guardia') location.replace('index.html');
+        if (!/[?&]entrar\b/.test(location.search) && rol === 'guardia') location.replace('index.html');
       } catch (e) {}
     })();
   </script>
@@ -74,7 +73,7 @@
       <div id="teclado" class="teclado"></div>
       <p id="login-error" class="error" role="alert"></p>
       <button id="btn-entrar" class="btn btn-primario" type="submit">Entrar</button>
-      <a class="login-volver" href="index.html">Soy guardia</a>
+      <a class="login-volver" href="index.html?entrar">Soy guardia</a>
     </form>
   </div></main>
 

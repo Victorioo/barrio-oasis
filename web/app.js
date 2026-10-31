@@ -621,7 +621,6 @@ async function entrar(e) {
     pintarPin();
     return;
   }
-  recordarRol('guardia');
   try { localStorage.setItem('guardia', usuario.charAt(0).toUpperCase() + usuario.slice(1)); } catch {}
   mostrarApp();
 }
@@ -648,10 +647,6 @@ function haySesionGuardada() {
   }
 }
 
-// Último rol que inició sesión en este celular (para abrir la vista que corresponde sin señal).
-const recordarRol = (rol) => {
-  try { if (rol) localStorage.setItem('rol', rol); return localStorage.getItem('rol'); } catch { return null; }
-};
 
 async function iniciar() {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(console.warn);
@@ -672,7 +667,7 @@ async function iniciar() {
     $('form-login').hidden = !guardia;
   };
   $('seg-guardia').addEventListener('click', () => modoLogin(true));
-  $('seg-vecino').addEventListener('click', () => { location.href = 'vecino.html'; });
+  $('seg-vecino').addEventListener('click', () => { location.href = 'vecino.html?entrar'; });
   document.addEventListener('keydown', (e) => {
     if ($('vista-login').hidden || e.metaKey || e.ctrlKey || e.target.id === 'l-usuario') return;
     if (/^\d$/.test(e.key)) tocarTecla(e.key);
@@ -699,8 +694,10 @@ async function iniciar() {
   } catch { /* sin señal */ }
 
   // Si hay una sesión guardada y no se pudo renovar por falta/mala señal, se entra igual (no se pide el PIN de nuevo).
-  const rolSesion = sesion?.user?.app_metadata?.rol ?? recordarRol();
-  if (rolSesion === 'vecino' && (sesion || haySesionGuardada())) { location.replace('vecino.html'); return; }
+  const rolSesion = sesion?.user?.app_metadata?.rol;
+  const quiereEntrar = /[?&]entrar\b/.test(location.search);
+  if (rolSesion === 'vecino' && quiereEntrar) { await sb.auth.signOut(); mostrarLogin(); return; }
+  if (rolSesion === 'vecino') { location.replace('vecino.html'); return; }
   if (sesion || haySesionGuardada()) mostrarApp();
   else mostrarLogin();
 

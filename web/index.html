@@ -20,8 +20,7 @@
             rol = s && s.user && s.user.app_metadata && s.user.app_metadata.rol || null;
           }
         }
-        if (!rol) rol = localStorage.getItem('rol');
-        if (rol === 'vecino') location.replace('vecino.html');
+        if (!/[?&]entrar\b/.test(location.search) && rol === 'vecino') location.replace('vecino.html');
       } catch (e) {}
     })();
   </script>
