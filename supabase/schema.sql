@@ -74,6 +74,7 @@ create or replace function public.rol_actual()
 returns text
 language sql
 stable
+set search_path = ''
 as $$
   select coalesce(auth.jwt() -> 'app_metadata' ->> 'rol', '')
 $$;
@@ -165,6 +166,9 @@ create trigger trg_movimientos_antes_insert
   before insert on public.movimientos
   for each row execute function public.movimientos_antes_de_insertar();
 
+-- el trigger no se debe poder llamar a mano desde la API pública
+revoke execute on function public.movimientos_antes_de_insertar() from public, anon, authenticated;
+
 -- CONSULTAS DE VECINOS: la garita solo puede AGREGAR (no puede leerlas); el admin ve todo
 grant select, insert, update, delete on public.consultas_vecinos to authenticated;
 
@@ -189,3 +193,25 @@ create policy consultas_admin on public.consultas_vecinos
 --      set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb) || '{"rol":"admin"}'
 --    where email = 'tumail@gmail.com';
 -- =====================================================================
+
+-- =====================================================================
+-- VISTA DE VECINO + AVISO DE ENTRADAS  (migración "vista_vecino_y_avisos", ya aplicada)
+-- Cada vecino es un usuario de Auth con app_metadata {"rol":"vecino","casa_id":N}
+-- (los crea scripts/crear-vecinos.mjs). Ve solo lo de su casa.
+-- =====================================================================
+-- create extension if not exists pg_net with schema extensions;
+--
+-- casa_actual()            -> casa_id del vecino logueado (sale de app_metadata)
+-- casas_vecino_leer / vehiculos_vecino_leer  -> el vecino lee solo su casa y sus autos
+-- visitas_esperadas        -> visitas que el vecino avisa (RLS: solo su casa; admin todo)
+-- push_suscripciones       -> un registro por celular del vecino (RLS: solo las suyas)
+-- mis_visitas()/mis_consultas() -> funciones que devuelven SOLO patente, hora, marca y color
+--                             (nunca el guardia ni las observaciones del guardia)
+-- trigger trg_movimientos_notificar -> al insertar una ENTRADA con casa, llama por pg_net a la
+--                             Edge Function notificar-visita con un secreto guardado en Vault
+-- notif_config()           -> la lee la función con la service key (secreto + claves VAPID)
+--
+-- Secretos en Vault (Project Settings > Vault, o vault.create_secret):
+--   notif_secreto   texto largo al azar
+--   vapid_privada / vapid_publica   par de claves VAPID (la pública también va en web/config.js)
+-- Ver la migración completa en el historial de Supabase.

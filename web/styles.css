@@ -305,6 +305,9 @@ button { font: inherit; }
 .casa-bloque.falta { outline: 3px solid var(--bad-strong); outline-offset: 6px; border-radius: var(--r-sm); animation: sacudir .3s; }
 .casa-etiqueta { display: flex; align-items: baseline; justify-content: space-between; font-size: 17px; font-weight: 700; }
 .casa-etiqueta span { font-size: 14px; font-weight: 600; color: var(--text-2); }
+.muni { display: flex; flex-direction: column; gap: var(--sp-2); }
+.muni-aviso { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); padding: var(--sp-2) 0; font-size: 14px; line-height: 20px; color: var(--text-2); text-align: center; }
+.muni-aviso .i { width: 18px; height: 18px; }
 .visita-form { display: flex; flex-direction: column; gap: var(--sp-3); padding: var(--sp-4); }
 .form-fila { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
 .input-area { height: auto; min-height: 76px; padding: var(--sp-3) var(--sp-4); resize: none; line-height: 22px; font-family: inherit; }
@@ -348,3 +351,6 @@ button { font: inherit; }
 .toast-deshacer:hover { background: rgba(0, 0, 0, .12); }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+select.input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--text-2) 50%), linear-gradient(135deg, var(--text-2) 50%, transparent 50%); background-position: calc(100% - 22px) 25px, calc(100% - 16px) 25px; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 44px; }
+select.input:disabled { background-color: var(--dis-bg); color: var(--dis-text); border-color: var(--dis-bg); cursor: not-allowed; }

@@ -1,0 +1,53 @@
+/* Vista de vecino: solo lo que no está en styles.css (mismos tokens y componentes). */
+
+body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+
+
+.saludo h1 { font-size: 24px; line-height: 29px; font-weight: 700; letter-spacing: -.01em; }
+.saludo p { margin-top: var(--sp-1); font-size: 15px; line-height: 22px; color: var(--text-2); }
+
+.opcional { font-weight: 500; color: var(--text-2); }
+.patente-input-s { height: 84px; }
+.patente-input-s input { font-size: 32px; }
+
+/* autos */
+.autos li { padding: var(--sp-3) var(--sp-4); gap: var(--sp-3); }
+.autos .auto-icono { display: grid; place-items: center; width: 40px; height: 40px; border-radius: var(--r-sm); background: var(--primary-subtle); color: var(--primary-text); flex: none; }
+.autos .auto-icono .i { width: 22px; height: 22px; }
+
+/* filas con acción */
+.tabla .fila-badge { flex: none; display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: var(--r-sm); background: var(--primary-subtle); color: var(--primary-text); font-size: 12px; font-weight: 700; }
+.tabla .fila-badge.ok { background: var(--ok-bg); color: var(--ok-text); }
+.tabla .fila-badge.gris { background: var(--hover); color: var(--text-2); }
+.tabla .btn-icono { flex: none; margin-right: -8px; }
+.mono { font-family: var(--font-mono); font-weight: 500; }
+
+.nota { display: flex; gap: var(--sp-3); padding: var(--sp-4); font-size: 14px; line-height: 20px; color: var(--text-2); box-shadow: none; }
+.nota .i { width: 20px; height: 20px; color: var(--primary-text); margin-top: 1px; }
+
+/* barra inferior */
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 0 var(--sp-2) env(safe-area-inset-bottom); background: var(--surface); border-top: 1px solid var(--border); }
+.tabbar button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 64px; border: 0; background: transparent; color: var(--text-2); font-size: 12px; font-weight: 600; cursor: pointer; touch-action: manipulation; border-top: 3px solid transparent; }
+.tabbar button .i { width: 24px; height: 24px; }
+.tabbar button:hover { background: var(--hover); }
+.tabbar button[aria-current="page"] { color: var(--primary-text); border-top-color: var(--primary); }
+.toast { bottom: calc(80px + env(safe-area-inset-bottom)); }
+
+/* avisos */
+.avisos { display: flex; flex-direction: column; gap: var(--sp-3); padding: var(--sp-4); }
+.avisos-cab { display: flex; gap: var(--sp-3); }
+.avisos-cab > .i { width: 22px; height: 22px; color: var(--primary-text); margin-top: 2px; }
+.avisos-cab h2 { font-size: 17px; line-height: 24px; font-weight: 700; }
+.avisos-cab p { font-size: 14px; line-height: 20px; color: var(--text-2); }
+.avisos .btn.activo { background: var(--ok-bg); color: var(--ok-text); border-color: var(--ok-border); cursor: default; }
+.push { position: fixed; left: var(--sp-3); right: var(--sp-3); top: calc(var(--sp-3) + env(safe-area-inset-top)); z-index: 40; max-width: 536px; margin: 0 auto; display: flex; gap: var(--sp-3); padding: var(--sp-3); border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); box-shadow: 0 8px 24px rgba(9, 30, 66, .28); animation: bajar .25s ease-out; }
+.push .logo { width: 36px; height: 36px; }
+.push-app { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .04em; }
+.push-titulo { font-size: 15px; line-height: 20px; font-weight: 700; }
+.push-det { font-size: 14px; line-height: 20px; color: var(--text-2); }
+@keyframes bajar { from { transform: translateY(-16px); opacity: 0; } }
+
+.avisos-nota { font-size: 14px; line-height: 20px; color: var(--text-2); padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm); background: var(--hover); }
+.login-form .input { margin-bottom: 0; }
+.login-volver { align-self: center; min-height: 44px; display: inline-flex; align-items: center; color: var(--primary-text); font-size: 15px; font-weight: 600; text-decoration: none; }
+.login-volver:hover { text-decoration: underline; }

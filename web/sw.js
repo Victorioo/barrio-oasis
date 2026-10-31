@@ -1,10 +1,13 @@
 // Service worker: deja la app (HTML/JS/CSS) disponible sin señal.
 // Los datos (patentes, movimientos) viven en IndexedDB, no acá.
 // Al publicar una versión nueva, subí el número de CACHE.
-const CACHE = 'garita-v16';
+const CACHE = 'garita-v20';
 const ARCHIVOS = [
   './',
   'index.html',
+  'vecino.html',
+  'vecino.js',
+  'vecino.css',
   'styles.css',
   'app.js',
   'db.js',
@@ -55,4 +58,26 @@ self.addEventListener('fetch', (e) => {
       return resp || (req.mode === 'navigate' ? cache.match('index.html') : Response.error());
     })
   );
+});
+
+// Notificaciones push: aviso al vecino cuando la garita registra la entrada de un auto a su casa.
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch { /* sin cuerpo */ }
+  e.waitUntil(self.registration.showNotification(d.titulo || 'Garita Oasis', {
+    body: d.cuerpo || '',
+    icon: 'icons/icon-192.png',
+    badge: 'icons/icon-192.png',
+    tag: d.tag,
+    data: { url: d.url || 'vecino.html' },
+  }));
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = new URL(e.notification.data?.url || 'vecino.html', self.location.origin).href;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((ws) => {
+    const abierta = ws.find((w) => w.url.startsWith(self.location.origin + '/vecino'));
+    return abierta ? abierta.navigate(url).then((w) => w?.focus()) : self.clients.openWindow(url);
+  }));
 });

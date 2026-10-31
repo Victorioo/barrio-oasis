@@ -1,7 +1,7 @@
 import { CONFIG } from './config.js';
 import * as db from './db.js';
 import {
-  normalizarPatente, formatearPatente, filtrarCasas, entradasPrevias, colorCss,
+  normalizarPatente, formatearPatente, ordenarCasas, entradasPrevias, colorCss,
   turnoDelDia, fechaCorta, hhmm,
 } from './logic.js';
 
@@ -20,8 +20,10 @@ let pendientesN = 0;
 let sincronizando = false;
 let actual = null; // { patente, vehiculos, previas }
 let casaElegida = null;
+let selMz = '', selLote = ''; // selección en curso de manzana y lote
 let nuevaId = null; // último movimiento registrado (se resalta en la lista)
 let pin = '';
+let muni = { estado: 'idle', datos: null }; // consulta de datos del vehículo en el Portal Tributario
 let datosVisita = { marca: '', color: '', detalles: '' }; // campos opcionales de un auto no registrado
 let ultimaConsulta = { patente: '', t: 0 }; // evita registrar dos veces la misma consulta seguida
 let retenidoId = null; // movimiento recién registrado: no se sube hasta que pase el plazo de "Deshacer"
@@ -213,8 +215,9 @@ function buscar() {
     avisarError('Escribí la patente completa');
     return;
   }
-  casaElegida = null;
+  casaElegida = null; selMz = ''; selLote = '';
   datosVisita = { marca: '', color: '', detalles: '' };
+  muni = { estado: 'idle', datos: null };
   const vehiculos = vehiculosPorPatente.get(patente) ?? [];
   const previas = vehiculos.length ? [] : entradasPrevias(movimientos, patente, CONFIG.DIAS_HISTORIAL);
   actual = { patente, vehiculos, previas };
@@ -291,6 +294,11 @@ function pintarResultado() {
         </section>`;
     }
     html += `<div class="chapa-centro">${chapa(patente, 'l')}</div>`;
+    html += `<div class="muni">
+        <div class="casa-etiqueta">Datos oficiales del vehículo<span>Portal Municipal</span></div>
+        <button id="btn-muni" type="button" class="btn btn-contorno">${icono('search')}Consultar datos del vehículo</button>
+        <div id="muni-resultado" aria-live="polite"></div>
+      </div>`;
     if (ambar) {
       html += `<div class="card previas">
           <div class="previas-titulo">${icono('history')}Visitas anteriores</div>
@@ -317,7 +325,7 @@ function pintarResultado() {
           <textarea id="v-detalles" class="input input-area" rows="2" maxlength="300" placeholder="Más detalles: dónde se detuvo, qué hizo…"></textarea></div>
       </div>
       <div class="casa-bloque" id="selector">
-        <label class="casa-etiqueta" for="casa-buscar">¿A qué casa va?<span>Opcional</span></label>
+        <div class="casa-etiqueta">¿A qué casa va?<span>Opcional</span></div>
         <div id="casa-zona"></div>
       </div>`;
   }
@@ -325,10 +333,58 @@ function pintarResultado() {
   $('resultado').innerHTML = html;
   $('resultado').classList.toggle('compacto', !vehiculos.length);
   if (!vehiculos.length) {
+    $('btn-muni').addEventListener('click', consultarVehiculo);
     for (const [id, campo] of [['v-marca', 'marca'], ['v-color', 'color'], ['v-detalles', 'detalles']])
       $(id).addEventListener('input', (e) => { datosVisita[campo] = e.target.value; });
     pintarSelector();
   }
+}
+
+// Datos del vehículo según el Portal Tributario (la consulta pasa por una función del servidor;
+// el portal no se puede llamar directo desde el celular, y de él solo se traen los datos del vehículo).
+async function consultarVehiculo() {
+  if (!actual || actual.vehiculos.length) return;
+  const patente = actual.patente;
+  if (!navigator.onLine) {
+    muni = { estado: 'offline', datos: null };
+    pintarMuni();
+    return;
+  }
+  muni = { estado: 'cargando', datos: null };
+  pintarMuni();
+  try {
+    const { data, error } = await sb.functions.invoke('consultar-vehiculo', { body: { patente } });
+    if (actual?.patente !== patente) return; // el guardia ya pasó a otra patente
+    if (error) muni = { estado: error.context?.status === 422 ? 'formato' : 'error', datos: null };
+    else if (!data?.encontrado) muni = { estado: 'nada', datos: null };
+    else muni = { estado: 'ok', datos: data };
+  } catch (err) {
+    console.warn('Consulta al portal falló', err);
+    if (actual?.patente !== patente) return;
+    muni = { estado: 'error', datos: null };
+  }
+  pintarMuni();
+}
+
+function pintarMuni() {
+  const btn = $('btn-muni');
+  const caja = $('muni-resultado');
+  if (!btn || !caja) return;
+  const { estado, datos } = muni;
+  btn.disabled = estado === 'cargando';
+  btn.innerHTML = `${icono('search')}${estado === 'cargando' ? 'Consultando…' : estado === 'idle' ? 'Consultar datos del vehículo' : 'Volver a consultar'}`;
+
+  const aviso = (txt) => `<p class="muni-aviso">${icono('info')}${esc(txt)}</p>`;
+  if (estado === 'ok') {
+    const filas = [['Marca', datos.marca], ['Tipo', datos.tipo], ['Modelo', datos.modelo], ['Estado', datos.estado]].filter(([, v]) => v);
+    if (!datos.marca && datos.detalle) filas.unshift(['Detalle', datos.detalle]); // formato inesperado: se muestra el texto completo
+    caja.innerHTML = `<dl class="card datos">${filas.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+      <p class="nota-consulta">${icono('check-circle')}Portal Tributario Municipal · ${esc(hhmm(new Date(datos.consultado_en || Date.now())))}</p>`;
+  } else if (estado === 'nada') caja.innerHTML = aviso('No encontré esta patente en el Portal Tributario.');
+  else if (estado === 'formato') caja.innerHTML = aviso('La patente tiene un formato inusual y no se puede consultar.');
+  else if (estado === 'offline') caja.innerHTML = aviso('Sin conexión: no se puede consultar ahora.');
+  else if (estado === 'error') caja.innerHTML = aviso('No se pudo consultar ahora. Probá de nuevo.');
+  else caja.innerHTML = '';
 }
 
 function casasSugeridas() {
@@ -352,37 +408,47 @@ function pintarSelector() {
     zona.innerHTML = `<div class="elegida">${icono('home')}<span>${esc(nombreCasaLargo(casaElegida))}</span>
       <button type="button" id="casa-cambiar">Cambiar</button></div>`;
     $('casa-cambiar').onclick = () => {
-      casaElegida = null;
+      casaElegida = null; selMz = ''; selLote = '';
       pintarSelector();
       actualizarAcciones();
-      $('casa-buscar')?.focus();
     };
     return;
   }
+
+  const unicos = (a) => [...new Set(a)];
+  const ordenadas = ordenarCasas(casas);
+  const manzanas = unicos(ordenadas.map((c) => c.manzana));
+  const lotes = selMz ? unicos(ordenadas.filter((c) => c.manzana === selMz).map((c) => c.lote)) : [];
+  const familias = selMz && selLote ? ordenadas.filter((c) => c.manzana === selMz && c.lote === selLote) : [];
+  const opciones = (vals, sel, vacio) => `<option value="">${vacio}</option>` + vals.map((v) => `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(v)}</option>`).join('');
 
   const sugeridas = casasSugeridas();
   zona.innerHTML = `
     ${sugeridas.length ? `<div class="sugeridas">${sugeridas
       .map((c) => `<button type="button" class="sugerida" data-id="${c.id}">${icono('history')}${esc(nombreCasa(c))}</button>`)
       .join('')}</div>` : ''}
-    <div class="buscador">${icono('search')}<input id="casa-buscar" class="input" type="text" inputmode="text"
-      autocomplete="off" role="combobox" aria-expanded="false" aria-controls="casa-opciones"
-      placeholder="Manzana y lote, ej: 4-12"></div>
-    <div id="casa-opciones" class="opciones" role="listbox" aria-label="Casas encontradas" hidden></div>`;
+    <div class="form-fila">
+      <div><label class="etiqueta" for="sel-mz">Manzana</label>
+        <select id="sel-mz" class="input">${opciones(manzanas, selMz, 'Elegir')}</select></div>
+      <div><label class="etiqueta" for="sel-lote">Lote</label>
+        <select id="sel-lote" class="input"${selMz ? '' : ' disabled'}>${opciones(lotes, selLote, 'Elegir')}</select></div>
+    </div>
+    <div><label class="etiqueta" for="sel-info">Dato adicional</label>
+      <select id="sel-info" class="input"${familias.length > 1 ? '' : ' disabled'}>
+        <option value="">${familias.length > 1 ? 'Elegir (hay más de una familia)' : '—'}</option>
+        ${familias.length > 1 ? familias.map((c) => `<option value="${c.id}">${esc(infoCasa(c) || 'Sin dato adicional')}</option>`).join('') : ''}
+      </select></div>`;
 
-  const input = $('casa-buscar');
-  const caja = $('casa-opciones');
-  const actualizar = () => {
-    const hayTexto = input.value.trim() !== '';
-    const lista = hayTexto ? filtrarCasas(casas, input.value).slice(0, 6) : [];
-    caja.hidden = !hayTexto;
-    input.classList.toggle('abierto', hayTexto && lista.length > 0);
-    input.setAttribute('aria-expanded', String(hayTexto && lista.length > 0));
-    caja.innerHTML = lista.length
-      ? lista.map((c) => `<button type="button" role="option" aria-selected="false" class="opcion" data-id="${c.id}">${icono('home')}${esc(nombreCasaLargo(c))}</button>`).join('')
-      : '<p class="sin-resultados">No encontré esa casa</p>';
+  zona.onchange = (e) => {
+    if (e.target.id === 'sel-mz') { selMz = e.target.value; selLote = ''; pintarSelector(); }
+    else if (e.target.id === 'sel-lote') {
+      selLote = e.target.value;
+      const fam = ordenadas.filter((c) => c.manzana === selMz && c.lote === selLote);
+      if (fam.length === 1) elegirCasa(fam[0]); // un solo grupo en ese lote: queda elegida
+      else pintarSelector();
+      $('sel-info')?.focus();
+    } else if (e.target.id === 'sel-info' && e.target.value) elegirCasa(casasPorId.get(Number(e.target.value)));
   };
-  input.oninput = actualizar;
   zona.onclick = (e) => {
     const b = e.target.closest('[data-id]');
     if (b) elegirCasa(casasPorId.get(Number(b.dataset.id)));
@@ -441,7 +507,7 @@ async function registrar(tipo) {
 
 function limpiar() {
   actual = null;
-  casaElegida = null;
+  casaElegida = null; selMz = ''; selLote = '';
   $('resultado').innerHTML = '';
   $('patente').value = '';
   mostrarPantalla('principal');
@@ -584,10 +650,9 @@ async function iniciar() {
     $('seg-guardia').setAttribute('aria-pressed', String(guardia));
     $('seg-vecino').setAttribute('aria-pressed', String(!guardia));
     $('form-login').hidden = !guardia;
-    $('aviso-vecino').hidden = guardia;
   };
   $('seg-guardia').addEventListener('click', () => modoLogin(true));
-  $('seg-vecino').addEventListener('click', () => modoLogin(false));
+  $('seg-vecino').addEventListener('click', () => { location.href = 'vecino.html'; });
   document.addEventListener('keydown', (e) => {
     if ($('vista-login').hidden || e.metaKey || e.ctrlKey) return;
     if (/^\d$/.test(e.key)) tocarTecla(e.key);

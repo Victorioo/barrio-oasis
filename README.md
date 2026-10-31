@@ -67,6 +67,7 @@ Para actualizar la app: reemplazá los archivos, subí el número de `CACHE` en 
 
 - **Sin señal**: el celular guarda en IndexedDB casas, vehículos y movimientos de 15 días. Casas y vehículos se bajan completos al abrir la app y como mucho una vez por hora; los movimientos, solo los nuevos (por eso el celu consulta cada 5 min gastando casi nada de datos). También se refresca al volver la conexión. Los movimientos nuevos se guardan primero en el celu con un `id` único y se suben solos; si se corta justo al subir, no se duplican.
 - **Colores**: verde = vecino; rojo = no registrada; amarillo = no vecino con 2+ entradas en 15 días, con el historial de visitas anteriores. En ambos casos el guardia puede (todo opcional) cargar marca, color, "¿se frenó en algún lado?" con más detalles, y a qué casa va; nada de eso bloquea el registro de la entrada o la salida.
+- **Datos oficiales del vehículo**: en un auto no registrado, el botón "Consultar datos del vehículo" trae marca, tipo, modelo y estado desde el Portal Tributario de la Municipalidad de Córdoba. El portal no se puede llamar directo desde el celular (no admite CORS), así que la consulta pasa por la función `consultar-vehiculo` (`supabase/functions/consultar-vehiculo/`), que solo atiende a usuarios con rol guardia o admin y devuelve únicamente los datos del vehículo: las deudas y el nombre del titular se descartan en el servidor. Requiere conexión. Para volver a desplegarla: `supabase functions deploy consultar-vehiculo` (o desde el panel, en Edge Functions). Ojo: el portal es una API pública sin documentación ni garantías; si la Municipalidad la cambia o la restringe, el botón avisará "No se pudo consultar" y el resto de la app sigue funcionando.
 - **Autos de vecinos (privacidad)**: la garita no registra entradas ni salidas de vecinos y no ve sus movimientos. Al consultar una patente de vecino solo queda guardado que el guardia la consultó (tabla `consultas_vecinos`, que la garita puede agregar pero no leer; la ves vos desde el panel). Esto se aplica también en la base: aunque alguien modifique la app, el servidor descarta los movimientos de vecinos y no se los devuelve al guardia.
 - **Qué ve la garita de un vecino**: nombre, teléfono (tocable para llamar), vehículo y color, manzana, lote e información adicional. En la base, el permiso de lectura de la tabla `casas` se da columna por columna (`grant select (id, manzana, lote, nombre, telefono, info_adicional)`), así que si agregás otra columna a esa tabla, la garita no la ve hasta que la sumes ahí. Ojo: para funcionar sin señal, el celular del guardia guarda esos nombres y teléfonos; al tocar "Cerrar turno" se borran.
 - **Permisos**: guardia = leer casas y vehículos + leer y registrar movimientos de autos de afuera + agregar consultas de vecinos. Admin = además modificar casas, vehículos y movimientos. (El guardia no puede editar vecinos: es más seguro que lo que pedía el enunciado de “leer y escribir”, y el MVP no lo necesita.)
@@ -77,3 +78,17 @@ Para actualizar la app: reemplazá los archivos, subí el número de `CACHE` en 
 ## Para más adelante (no incluido)
 
 Cuentas de vecinos, visitas autorizadas, panel de sospechosos y fotos de patentes. La base ya quedó lista: `movimientos.casa_destino_id` y `es_vecino` alcanzan para armar los reportes.
+
+
+## Vista de vecino y aviso de entradas
+
+- **Ingreso del vecino:** `vecino.html` (desde "Soy vecino" en el login). Usuario = teléfono, contraseña = PIN de 6 números.
+  Las cuentas las crea la administración con `scripts/crear-vecinos.mjs` (una por casa, usa el teléfono del censo) y el script
+  deja un archivo local con los PINs para entregárselos. Los últimos 10 dígitos del teléfono son el usuario.
+- **Qué ve el vecino:** su casa y autos, las visitas que llegaron a su casa (patente, hora, marca y color; nunca el guardia ni
+  las observaciones), quién consultó sus patentes (sin nombre de guardia ni turno) y las visitas que avisó.
+- **Aviso:** cuando el guardia registra una ENTRADA y eligió la casa, un trigger de la base llama a la Edge Function
+  `notificar-visita`, que manda una notificación push a los celulares de ese vecino. Si el guardia no elige casa, no se avisa a nadie.
+- **iPhone:** las notificaciones solo funcionan si el vecino instala la app ("Compartir > Agregar a inicio") y la abre desde el ícono.
+- **Pendiente:** la garita todavía no muestra las visitas que el vecino avisó (tabla `visitas_esperadas`).
+- Demo sin conexión: `demo-vecino.html` (datos inventados; no se publica).

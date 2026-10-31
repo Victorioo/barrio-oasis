@@ -2,6 +2,8 @@
 web/demo-datos.js
 web/demo.html
 web/demo-stub.js
+web/demo-vecino.html
+web/demo-vecino-stub.js
 
 # --- Datos y secretos ---
 *.csv
