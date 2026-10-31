@@ -77,6 +77,27 @@
     </form>
   </div></main>
 
+  <!-- ============ CAMBIAR PIN (primer ingreso) ============ -->
+  <main id="vista-pin" class="login-fondo" hidden><div class="login">
+    <div class="marca">
+      <span class="logo logo-l"><svg class="i"><use href="#i-shield-check"/></svg></span>
+      <div>
+        <h1 class="marca-titulo">Barrio Oasis</h1>
+        <p class="marca-sub">Seguridad y accesos · Córdoba</p>
+      </div>
+    </div>
+    <div class="login-form">
+      <div class="login-titulos">
+        <h2 id="p-titulo">Elegí tu nuevo PIN</h2>
+        <p id="p-sub">Al principio todos los vecinos tienen el mismo PIN. Elegí uno solo tuyo, de 6 números, para que nadie más pueda entrar a tu casa.</p>
+      </div>
+      <div id="p-puntos" class="pin-puntos" role="status" aria-label="0 de 6 números ingresados"></div>
+      <div id="p-teclado" class="teclado"></div>
+      <p id="p-error" class="error" role="alert"></p>
+      <button id="p-seguir" class="btn btn-primario" type="button">Continuar</button>
+    </div>
+  </div></main>
+
   <div id="vista-app" hidden>
   <header class="top">
     <span class="logo"><svg class="i"><use href="#i-shield-check"/></svg></span>

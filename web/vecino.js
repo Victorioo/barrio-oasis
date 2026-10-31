@@ -62,6 +62,7 @@ function pintarPin() {
 }
 
 function mostrarLogin(mensaje = '') {
+  $('vista-pin').hidden = true;
   $('vista-app').hidden = true;
   $('vista-login').hidden = false;
   $('login-error').textContent = mensaje;
@@ -90,6 +91,80 @@ async function entrar(e) {
     return;
   }
   mostrarApp();
+}
+
+// ---------- primer ingreso: cambiar el PIN ----------
+// Las cuentas se crean todas con el mismo PIN; hasta que el vecino elige el suyo no pasa de esta pantalla.
+// La marca queda en user_metadata.pin_cambiado (es solo para no volver a pedirlo; la seguridad es el PIN).
+let nuevoPin = '', primerPin = '';
+
+function pintarPinNuevo() {
+  $('p-puntos').innerHTML = Array.from({ length: 6 }, (_, i) => `<span class="pin-punto ${i < nuevoPin.length ? 'lleno' : ''}"></span>`).join('');
+  $('p-puntos').setAttribute('aria-label', `${nuevoPin.length} de 6 números ingresados`);
+}
+
+function tocarTeclaNueva(k) {
+  $('p-error').textContent = '';
+  if (k === 'del') nuevoPin = nuevoPin.slice(0, -1);
+  else if (nuevoPin.length < 6) nuevoPin += k;
+  pintarPinNuevo();
+}
+
+const pinDebil = (p) => /^(\d)\1{5}$/.test(p) || '01234567890'.includes(p) || '09876543210'.includes(p);
+
+function mostrarCambioPin() {
+  $('vista-login').hidden = true;
+  $('vista-app').hidden = true;
+  $('vista-pin').hidden = false;
+  nuevoPin = ''; primerPin = '';
+  $('p-titulo').textContent = 'Elegí tu nuevo PIN';
+  $('p-seguir').textContent = 'Continuar';
+  $('p-error').textContent = '';
+  pintarPinNuevo();
+}
+
+async function seguirCambioPin() {
+  if (nuevoPin.length < 6) { $('p-error').textContent = 'Ingresá los 6 números.'; return; }
+  if (!primerPin) {
+    if (pinDebil(nuevoPin)) { $('p-error').textContent = 'Ese PIN es muy fácil de adivinar. Elegí otro.'; nuevoPin = ''; pintarPinNuevo(); return; }
+    primerPin = nuevoPin; nuevoPin = '';
+    $('p-titulo').textContent = 'Repetí tu nuevo PIN';
+    $('p-seguir').textContent = 'Guardar PIN';
+    pintarPinNuevo();
+    return;
+  }
+  if (nuevoPin !== primerPin) {
+    mostrarCambioPin(); $('p-error').textContent = 'No coinciden. Volvé a elegir tu PIN.';
+    return;
+  }
+  if (!navigator.onLine) { $('p-error').textContent = 'Necesitás señal para guardar el PIN.'; return; }
+  $('p-seguir').disabled = true;
+  const { error } = await sb.auth.updateUser({ password: nuevoPin, data: { pin_cambiado: true } });
+  $('p-seguir').disabled = false;
+  if (error) {
+    const igual = /different from the old|same/i.test(error.message);
+    mostrarCambioPin();
+    $('p-error').textContent = igual ? 'Tiene que ser distinto del PIN que te dieron. Elegí otro.' : 'No se pudo guardar el PIN. Probá de nuevo.';
+    return;
+  }
+  $('vista-pin').hidden = true;
+  mostrarApp();
+}
+
+function armarTecladoNuevo() {
+  const teclas = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
+  $('p-teclado').innerHTML = teclas.map((k) =>
+    k === '' ? '<span class="tecla-vacia"></span>'
+    : k === 'del' ? `<button type="button" class="tecla tecla-borrar" data-k="del" aria-label="Borrar último número">${ICONO('backspace')}</button>`
+    : `<button type="button" class="tecla" data-k="${k}">${k}</button>`).join('');
+  $('p-teclado').addEventListener('click', (e) => { const b = e.target.closest('[data-k]'); if (b) tocarTeclaNueva(b.dataset.k); });
+  $('p-seguir').addEventListener('click', seguirCambioPin);
+  document.addEventListener('keydown', (e) => {
+    if ($('vista-pin').hidden || e.metaKey || e.ctrlKey) return;
+    if (/^\d$/.test(e.key)) tocarTeclaNueva(e.key);
+    else if (e.key === 'Backspace') tocarTeclaNueva('del');
+    else if (e.key === 'Enter') seguirCambioPin();
+  });
 }
 
 async function salir() {
@@ -376,6 +451,12 @@ document.querySelector('.tabbar').addEventListener('click', (e) => { const b = e
 $('btn-salir').addEventListener('click', salir);
 
 async function mostrarApp() {
+  // Primer ingreso: antes de ver nada tiene que elegir su PIN (si no hay señal para guardarlo, entra igual).
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user?.user_metadata?.pin_cambiado !== true && navigator.onLine) { mostrarCambioPin(); return; }
+  } catch { /* sin sesión legible */ }
+  $('vista-pin').hidden = true;
   $('vista-login').hidden = true;
   $('vista-app').hidden = false;
   llenarDias();
@@ -393,6 +474,8 @@ async function iniciar() {
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(console.warn);
   armarTeclado();
   pintarPin();
+  armarTecladoNuevo();
+  pintarPinNuevo();
   $('form-login').addEventListener('submit', entrar);
   document.addEventListener('keydown', (e) => {
     if ($('vista-login').hidden || e.metaKey || e.ctrlKey || e.target.id === 'l-tel') return;
