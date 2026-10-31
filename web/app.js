@@ -148,10 +148,10 @@ async function sincronizar(forzar = false) {
 
     const maestrosAt = await db.leerMeta('maestrosAt');
     if (forzar || !maestrosAt || !casas.length || Date.now() - Date.parse(maestrosAt) > HORA) {
-      const [cs, vs] = await Promise.all([
-        traerTodo('casas', 'id,manzana,lote,nombre,telefono,info_adicional'),
-        traerTodo('vehiculos_vecinos', 'id,casa_id,patente,marca,modelo,color'),
-      ]);
+      // Lo que cada vecino decidió ocultar llega vacío desde el servidor (no se guarda en este celular).
+      const [rc, rv] = await Promise.all([sb.rpc('casas_garita'), sb.rpc('vehiculos_garita')]);
+      if (rc.error || rv.error) throw rc.error || rv.error;
+      const [cs, vs] = [rc.data, rv.data];
       await db.reemplazar('casas', cs);
       await db.reemplazar('vehiculos', vs);
       await db.guardarMeta('maestrosAt', new Date().toISOString());
@@ -268,18 +268,20 @@ function pintarResultado() {
       <div class="chapa-centro">${chapa(patente, 'l')}</div>`;
     for (const v of vehiculos) {
       const casa = casasPorId.get(v.casa_id);
-      const auto = [v.marca, v.modelo].filter(Boolean).join(' ') || 'Sin marca/modelo';
-      const tel = String(casa?.telefono ?? '').trim();
+      const tel = String(v.telefono ?? '').trim();
       const telHref = tel.replace(/[^\d+]/g, '');
-      html += `<dl class="card datos">
-        <div><dt>Nombre</dt><dd>${esc(casa?.nombre || '—')}</dd></div>
-        <div><dt>Teléfono</dt><dd>${tel ? `<a class="tel" href="tel:${esc(telHref)}">${icono('phone')}${esc(tel)}</a>` : '—'}</dd></div>
-        <div><dt>Vehículo</dt><dd class="vehiculo-valor"><span class="swatch" style="background:${colorCss(v.color)}"></span>${esc(auto)}${v.color ? ' · ' + esc(v.color) : ''}</dd></div>
-        <div><dt>Casa</dt><dd>${esc(nombreCasaLargo(casa, false))}</dd></div>
-        ${infoCasa(casa) ? `<div><dt>Información adicional</dt><dd>${esc(infoCasa(casa))}</dd></div>` : ''}
-      </dl>`;
+      const auto = [v.marca, v.modelo].filter(Boolean).join(' ');
+      const filas = [
+        v.nombre ? `<div><dt>Nombre</dt><dd>${esc(v.nombre)}</dd></div>` : '',
+        tel ? `<div><dt>Teléfono</dt><dd><a class="tel" href="tel:${esc(telHref)}">${icono('phone')}${esc(tel)}</a></dd></div>` : '',
+        auto || v.color ? `<div><dt>Vehículo</dt><dd class="vehiculo-valor"><span class="swatch" style="background:${colorCss(v.color)}"></span>${esc(auto)}${auto && v.color ? ' · ' : ''}${esc(v.color ?? '')}</dd></div>` : '',
+        casa ? `<div><dt>Casa</dt><dd>${esc(nombreCasaLargo(casa, false))}</dd></div>` : '',
+        casa && infoCasa(casa) ? `<div><dt>Información adicional</dt><dd>${esc(infoCasa(casa))}</dd></div>` : '',
+      ].filter(Boolean);
+      html += filas.length
+        ? `<dl class="card datos">${filas.join('')}</dl>`
+        : `<p class="nota-consulta">${icono('info')}El vecino eligió no mostrar más datos.</p>`;
     }
-    html += `<p class="nota-consulta">${icono('check-circle')}Consulta registrada · ${esc(hhmm(new Date()))}</p>`;
   } else {
     const ambar = previas.length >= CONFIG.ALERTA_MIN_ENTRADAS;
     if (ambar) {

@@ -77,7 +77,7 @@ export function leer(texto) {
   const idx = (...nombres) => cols.findIndex((c) => nombres.some((n) => c === n || c.startsWith(n)));
   const iTel = idx('numero de telefono', 'telefono');
   const iNombre = idx('nombre completo', 'nombre');
-  const iInfo = idx('dato adicional', 'info adicional', 'informacion adicional');
+  const iInfo = idx('dato adicional', 'dato', 'info adicional', 'informacion adicional');
   const iMz = idx('numero de manzana', 'manzana');
   const iLote = idx('numero de lote', 'lote');
   if (iMz < 0 || iLote < 0) throw new Error(`No encuentro las columnas de manzana/lote. Cabecera leída: ${cabecera.join(' | ')}`);

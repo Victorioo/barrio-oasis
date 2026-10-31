@@ -32,6 +32,7 @@
     <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
     <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
     <symbol id="i-backspace" viewBox="0 0 24 24"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z"/><path d="m18 9-6 6M12 9l6 6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
     <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
   </svg>
 
@@ -78,11 +79,16 @@
       <p>Esto es lo que la garita tiene registrado de tu casa.</p>
     </section>
 
-    <dl class="card datos" id="datos-casa"></dl>
+    <section class="privacidad">
+      <h2 class="privacidad-titulo">Elegí lo que querés que el guardia vea al buscar tu patente:</h2>
+      <ul class="card tabla" id="datos-casa"></ul>
+      <p class="ayuda">La patente siempre se ve. Los cambios llegan a la garita en menos de una hora.</p>
+    </section>
 
     <section>
       <div class="seccion-cab"><h2>Mis autos</h2><p id="total-autos"></p></div>
       <ul class="card tabla autos" id="lista-autos"></ul>
+      <button id="btn-agregar-auto" class="btn btn-contorno btn-agregar" type="button"><svg class="i"><use href="#i-plus"/></svg>Agregar un auto</button>
     </section>
 
     <section class="card avisos">
@@ -93,7 +99,7 @@
     </section>
 
     <div class="card nota"><svg class="i"><use href="#i-pencil"/></svg>
-      <p>¿Cambió un dato o un auto? Avisale a la administración y se actualiza en la garita.</p>
+      <p>¿Cambió tu nombre, tu teléfono o tu casa? Avisale a la administración. Tus autos los editás vos desde acá.</p>
     </div>
   </main>
 
@@ -106,15 +112,20 @@
 
     <form id="form-visita" class="card visita-form" autocomplete="off">
       <div>
-        <label class="etiqueta" for="v-patente">Patente</label>
+        <label class="etiqueta" for="v-nombre">Nombre y apellido</label>
+        <input id="v-nombre" class="input" type="text" autocapitalize="words" autocomplete="off" maxlength="80" placeholder="Ej: Marcos Pérez">
+      </div>
+      <div>
+        <label class="etiqueta" for="v-patente">Patente <span class="opcional">(Opcional)</span></label>
         <div class="patente-input patente-input-s">
           <div class="patente-banda" aria-hidden="true"><span>REPÚBLICA ARGENTINA</span><span class="bandera"></span></div>
           <input id="v-patente" type="text" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="12" placeholder="AB 123 CD">
         </div>
+        <p class="ayuda">Si no la sabés, dejala vacía: la garita te va a avisar igual.</p>
       </div>
       <div>
-        <label class="etiqueta" for="v-nombre">¿Quién viene? <span class="opcional">(Opcional)</span></label>
-        <input id="v-nombre" class="input" type="text" placeholder="Nombre de la visita">
+        <label class="etiqueta" for="v-motivo">Motivo <span class="opcional">(Opcional)</span></label>
+        <input id="v-motivo" class="input" type="text" maxlength="120" autocomplete="off" placeholder="Ej: Arreglo de plomería, mudanza">
       </div>
       <div>
         <label class="etiqueta" for="v-dia">Día</label>
@@ -159,6 +170,46 @@
   </nav>
 
   </div>
+
+  <!-- ============ HOJA: editar / agregar auto ============ -->
+  <div id="hoja-auto" class="hoja" role="dialog" aria-modal="true" aria-labelledby="hoja-titulo" hidden>
+    <form id="form-auto" class="hoja-cuerpo" autocomplete="off">
+      <div class="hoja-cab">
+        <h2 id="hoja-titulo">Editar auto</h2>
+        <button type="button" class="btn-icono" id="auto-cerrar" aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button>
+      </div>
+      <div>
+        <label class="etiqueta" for="a-patente">Patente</label>
+        <div class="patente-input patente-input-s">
+          <div class="patente-banda" aria-hidden="true"><span>REPÚBLICA ARGENTINA</span><span class="bandera"></span></div>
+          <input id="a-patente" type="text" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="12" placeholder="AB 123 CD">
+        </div>
+      </div>
+      <div class="form-fila">
+        <div><label class="etiqueta" for="a-marca">Marca</label>
+          <input id="a-marca" class="input" type="text" list="lista-marcas" autocomplete="off" autocapitalize="words" placeholder="Ej: Fiat"></div>
+        <div><label class="etiqueta" for="a-color">Color</label>
+          <input id="a-color" class="input" type="text" list="lista-colores" autocomplete="off" autocapitalize="words" placeholder="Ej: Gris"></div>
+      </div>
+      <div><label class="etiqueta" for="a-modelo">Modelo</label>
+        <input id="a-modelo" class="input" type="text" autocomplete="off" autocapitalize="words" placeholder="Ej: Cronos"></div>
+      <p id="a-error" class="error" role="alert"></p>
+      <button id="a-guardar" class="btn btn-primario" type="submit">Guardar</button>
+      <button id="a-eliminar" class="btn btn-contorno btn-peligro" type="button" hidden><svg class="i"><use href="#i-trash"/></svg>Eliminar este auto</button>
+    </form>
+  </div>
+
+  <datalist id="lista-marcas">
+    <option value="Fiat"><option value="Volkswagen"><option value="Chevrolet"><option value="Renault"><option value="Ford">
+    <option value="Peugeot"><option value="Citroën"><option value="Toyota"><option value="Honda"><option value="Nissan">
+    <option value="Jeep"><option value="Hyundai"><option value="Kia"><option value="Suzuki"><option value="Chery">
+    <option value="Mercedes-Benz"><option value="BMW"><option value="Audi"><option value="Mitsubishi"><option value="Moto">
+  </datalist>
+  <datalist id="lista-colores">
+    <option value="Blanco"><option value="Negro"><option value="Gris"><option value="Plata"><option value="Rojo">
+    <option value="Azul"><option value="Verde"><option value="Amarillo"><option value="Naranja"><option value="Marrón">
+    <option value="Beige"><option value="Bordó">
+  </datalist>
 
   <div id="push" class="push" role="status" hidden></div>
   <div id="toast" class="toast" role="status" hidden></div>

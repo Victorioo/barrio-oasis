@@ -90,10 +90,10 @@ alter table public.consultas_vecinos  enable row level security;
 revoke all on public.casas, public.vehiculos_vecinos, public.movimientos, public.consultas_vecinos from anon;
 revoke all on public.casas, public.vehiculos_vecinos, public.movimientos, public.consultas_vecinos from authenticated;
 
--- CASAS: la garita ve manzana, lote, info adicional, nombre y teléfono del vecino (datos que
--- necesita para identificar a quien llega). Las columnas se listan una por una a propósito:
+-- CASAS: la garita ve solo manzana, lote e info adicional (nunca nombre ni teléfono: el vecino
+-- los lee con mi_casa()). Las columnas se listan una por una a propósito:
 -- si más adelante agregás otra columna a `casas`, la garita NO la ve hasta que la sumes acá.
-grant select (id, manzana, lote, nombre, telefono, info_adicional) on public.casas to authenticated;
+grant select (id, manzana, lote, info_adicional) on public.casas to authenticated;
 
 create policy casas_leer on public.casas
   for select to authenticated
@@ -215,3 +215,25 @@ create policy consultas_admin on public.consultas_vecinos
 --   notif_secreto   texto largo al azar
 --   vapid_privada / vapid_publica   par de claves VAPID (la pública también va en web/config.js)
 -- Ver la migración completa en el historial de Supabase.
+
+-- Migración "ocultar_nombre_telefono_a_la_garita" (ya aplicada):
+--   revoke select on public.casas from authenticated;
+--   grant select (id, manzana, lote, info_adicional) on public.casas to authenticated;
+--   mi_casa() -> función security definer que devuelve al vecino los datos de SU casa (con nombre y teléfono).
+
+-- Migración "vecino_edita_sus_autos" (ya aplicada):
+--   políticas vehiculos_vecino_insertar / _modificar / _borrar: el vecino toca solo los autos de SU casa
+--   trigger trg_vehiculos_controlar: una patente no puede estar en dos casas; máximo 6 autos por casa
+--   tabla vehiculos_historial + trigger trg_vehiculos_anotar: cada alta, cambio de patente o baja hecha
+--   por un vecino queda anotada (solo el admin la lee)
+
+-- Migraciones "privacidad_del_vecino_ante_la_garita", "garita_recibe_nombre_y_telefono_por_vehiculo" y
+-- "visitas_nombre_obligatorio_patente_opcional" (ya aplicadas):
+--   casas.mostrar_nombre / mostrar_telefono (por defecto NO) y mostrar_vehiculo / mostrar_casa (por defecto SÍ)
+--   guardar_privacidad(...)  -> el vecino cambia sus preferencias (la patente nunca se puede ocultar)
+--   mi_casa()                -> datos y preferencias de la casa del vecino
+--   casas_garita() / vehiculos_garita() -> lo que baja al celular de la garita; lo oculto llega vacío (null)
+--   la garita ya no lee vehiculos_vecinos directamente (solo admin y el vecino)
+--   trigger trg_consultas_antes_insert -> el servidor pone la casa de cada consulta según la patente
+--   visitas_esperadas: nombre obligatorio, patente opcional
+--   visitas_esperadas.motivo (opcional, hasta 120 caracteres)

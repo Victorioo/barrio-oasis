@@ -92,3 +92,10 @@ Cuentas de vecinos, visitas autorizadas, panel de sospechosos y fotos de patente
 - **iPhone:** las notificaciones solo funcionan si el vecino instala la app ("Compartir > Agregar a inicio") y la abre desde el ícono.
 - **Pendiente:** la garita todavía no muestra las visitas que el vecino avisó (tabla `visitas_esperadas`).
 - Demo sin conexión: `demo-vecino.html` (datos inventados; no se publica).
+- **Autos del vecino:** el vecino agrega, edita (patente, marca, modelo, color) y borra sus autos. La base impide que una patente
+  esté en dos casas y limita a 6 autos por casa; cada alta, cambio de patente o baja queda en `vehiculos_historial` (solo admin).
+  La garita ve el cambio la próxima vez que sincroniza (al abrir la app o una vez por hora).
+- **Qué ve la garita (lo decide cada vecino):** en "Mi casa" el vecino activa o apaga nombre, teléfono, vehículo y casa. La patente
+  siempre se ve. Por defecto la garita ve vehículo y casa, y NO ve nombre ni teléfono. Lo que el vecino oculta no llega al celular
+  de la garita (no se descarga), y el cambio se aplica en la próxima sincronización (menos de una hora).
+- **Visitas avisadas:** nombre y apellido obligatorios, patente opcional.

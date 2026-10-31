@@ -102,9 +102,9 @@ async function salir() {
 async function cargar() {
   const hoy = aISO(new Date());
   const [c, a, v, ll, co] = await Promise.all([
-    sb.from('casas').select('id,manzana,lote,nombre,telefono,info_adicional').limit(1),
+    sb.rpc('mi_casa'),
     sb.from('vehiculos_vecinos').select('id,patente,marca,modelo,color').order('id'),
-    sb.from('visitas_esperadas').select('id,patente,nombre,dia').gte('dia', hoy).order('dia'),
+    sb.from('visitas_esperadas').select('id,patente,nombre,motivo,dia').gte('dia', hoy).order('dia'),
     sb.rpc('mis_visitas'),
     sb.rpc('mis_consultas'),
   ]);
@@ -114,30 +114,64 @@ async function cargar() {
   pintarCasa(); pintarVisitas(); pintarConsultas();
 }
 
+// ---------- qué ve la garita ----------
+const CAMPOS_PRIV = ['nombre', 'telefono', 'vehiculo', 'casa'];
+function pintarPrivacidad() {
+  if (!casa) { $('datos-casa').innerHTML = '<li class="vacio">Sin datos de la casa.</li>'; return; }
+  const info = String(casa.info_adicional ?? '').trim();
+  const resumenAutos = autos.map((a) => [a.marca, a.modelo, a.color].filter(Boolean).join(' ')).filter(Boolean).join(' · ') || '—';
+  const valores = {
+    nombre: ['Nombre', casa.nombre || '—'],
+    telefono: ['Teléfono', casa.telefono || '—'],
+    vehiculo: ['Vehículo (marca, modelo y color)', resumenAutos],
+    casa: ['Casa', `Mz ${casa.manzana} · Lote ${casa.lote}${info ? ' · ' + info : ''}`],
+  };
+  const filas = CAMPOS_PRIV.map((k) => {
+    const visible = !!casa[`mostrar_${k}`];
+    return `<li><button type="button" class="priv-fila ${visible ? '' : 'priv-oculto'}" role="switch" aria-checked="${visible}" data-priv="${k}">
+      <span class="priv-texto"><span class="priv-etiqueta">${esc(valores[k][0])}${visible ? '' : ' · oculto'}</span><span class="priv-valor">${esc(valores[k][1])}</span></span>
+      <span class="interruptor" aria-hidden="true"></span></button></li>`;
+  });
+  const patentes = autos.map((a) => formatearPatente(a.patente)).join(' · ') || '—';
+  filas.unshift(`<li><div class="priv-fila"><span class="priv-texto"><span class="priv-etiqueta">Patente</span><span class="priv-valor mono">${esc(patentes)}</span></span>
+    <span class="priv-fija">${ICONO('lock')}Siempre visible</span></div></li>`);
+  $('datos-casa').innerHTML = filas.join('');
+}
+
+$('datos-casa').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-priv]');
+  if (!b || !casa) return;
+  const campo = b.dataset.priv, clave = `mostrar_${campo}`;
+  casa[clave] = !casa[clave];
+  pintarPrivacidad();
+  const { error } = await sb.rpc('guardar_privacidad', {
+    p_nombre: casa.mostrar_nombre, p_telefono: casa.mostrar_telefono, p_vehiculo: casa.mostrar_vehiculo, p_casa: casa.mostrar_casa,
+  });
+  if (error) { casa[clave] = !casa[clave]; pintarPrivacidad(); toast('No se pudo guardar. Probá de nuevo.', true); return; }
+  toast(casa[clave] ? 'Ahora el guardia lo ve' : 'Ahora el guardia no lo ve');
+});
+
 // ---------- pintado ----------
 const chapaTxt = (p) => esc(formatearPatente(p));
 function pintarCasa() {
   if (!casa) {
     $('top-casa').textContent = '';
     $('saludo').textContent = 'Hola';
-    $('datos-casa').innerHTML = '<div><dt>Casa</dt><dd>Sin datos</dd></div>';
     return;
   }
   const info = String(casa.info_adicional ?? '').trim();
   const lote = `Mz ${casa.manzana} · Lote ${casa.lote}${info ? ' · ' + info : ''}`;
   $('top-casa').textContent = lote;
   $('saludo').textContent = casa.nombre ? `Hola, ${casa.nombre.split(' ')[0]}` : 'Hola';
-  $('datos-casa').innerHTML = `
-    <div><dt>Nombre</dt><dd>${esc(casa.nombre || '—')}</dd></div>
-    <div><dt>Teléfono</dt><dd>${ICONO('phone')}<span>${esc(casa.telefono || '—')}</span></dd></div>
-    <div><dt>Casa</dt><dd>${esc(lote)}</dd></div>`;
+  pintarPrivacidad();
   $('total-autos').textContent = plural(autos.length, 'auto', 'autos');
   $('lista-autos').innerHTML = autos.length ? autos.map((a) => `
     <li><span class="auto-icono">${ICONO('car')}</span>
       <div class="fila-datos">
         <p class="fila-quien">${esc([a.marca, a.modelo].filter(Boolean).join(' ') || 'Auto')}</p>
         <p class="fila-det">${a.color ? `<span class="swatch" style="display:inline-block;vertical-align:-2px;background:${colorCss(a.color)}"></span> ${esc(a.color)} · ` : ''}<b>${chapaTxt(a.patente)}</b></p>
-      </div></li>`).join('') : '<li class="vacio">No hay autos registrados.</li>';
+      </div>
+      <button class="btn-icono" type="button" data-editar="${esc(a.id)}" aria-label="Editar ${esc([a.marca, a.modelo].filter(Boolean).join(' ') || 'auto')} ${chapaTxt(a.patente)}">${ICONO('pencil')}</button></li>`).join('') : '<li class="vacio">No hay autos registrados.</li>';
 }
 
 function pintarVisitas() {
@@ -145,10 +179,11 @@ function pintarVisitas() {
   $('lista-esperadas').innerHTML = esperadas.length
     ? esperadas.map((v) => `
       <li><div class="fila-datos">
-          <p class="fila-quien"><span class="mono">${chapaTxt(v.patente)}</span></p>
-          <p class="fila-det">${esc(v.nombre || 'Sin nombre')} · ${esc(etiquetaDia(v.dia))}</p>
+          <p class="fila-quien">${esc(v.nombre)}</p>
+          <p class="fila-det">${v.patente ? `<b>${chapaTxt(v.patente)}</b> · ` : 'Sin patente · '}${esc(etiquetaDia(v.dia))}</p>
+          ${v.motivo ? `<p class="fila-det">${esc(v.motivo)}</p>` : ''}
         </div>
-        <button class="btn-icono" type="button" data-borrar="${esc(v.id)}" aria-label="Cancelar aviso de ${chapaTxt(v.patente)}">${ICONO('trash')}</button></li>`).join('')
+        <button class="btn-icono" type="button" data-borrar="${esc(v.id)}" aria-label="Cancelar aviso de ${esc(v.nombre)}">${ICONO('trash')}</button></li>`).join('')
     : '<li class="vacio">No avisaste ninguna visita.</li>';
 
   $('lista-llegadas').innerHTML = llegadas.length
@@ -177,6 +212,69 @@ function pintarConsultas() {
   }).join('') : '<li class="vacio">Todavía no se consultó ninguna de tus patentes.</li>';
 }
 
+// ---------- editar mis autos ----------
+let editando = null; // auto en edición (null = agregando uno nuevo)
+const ERR_AUTO = {
+  patente_no_disponible: 'No pudimos guardar esa patente. Revisala; si es tuya, hablá con la administración.',
+  limite_de_autos: 'Llegaste al máximo de 6 autos.',
+};
+function abrirHoja(auto) {
+  editando = auto;
+  $('hoja-titulo').textContent = auto ? 'Editar auto' : 'Agregar un auto';
+  $('a-patente').value = auto ? formatearPatente(auto.patente) : '';
+  $('a-marca').value = auto?.marca ?? '';
+  $('a-modelo').value = auto?.modelo ?? '';
+  $('a-color').value = auto?.color ?? '';
+  $('a-error').textContent = '';
+  $('a-eliminar').hidden = !auto;
+  $('hoja-auto').hidden = false;
+  $('a-patente').focus();
+}
+const cerrarHoja = () => { $('hoja-auto').hidden = true; editando = null; };
+
+$('btn-agregar-auto').addEventListener('click', () => {
+  if (autos.length >= 6) { toast('Llegaste al máximo de 6 autos.', true); return; }
+  abrirHoja(null);
+});
+$('lista-autos').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-editar]');
+  if (b) abrirHoja(autos.find((a) => String(a.id) === b.dataset.editar) ?? null);
+});
+$('auto-cerrar').addEventListener('click', cerrarHoja);
+$('hoja-auto').addEventListener('click', (e) => { if (e.target === $('hoja-auto')) cerrarHoja(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('hoja-auto').hidden) cerrarHoja(); });
+$('a-patente').addEventListener('input', () => { $('a-error').textContent = ''; });
+
+$('form-auto').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const patente = normalizarPatente($('a-patente').value);
+  if (!/^[A-Z0-9]{5,8}$/.test(patente)) { $('a-error').textContent = 'Revisá la patente: tiene que tener entre 5 y 8 letras o números.'; $('a-patente').focus(); return; }
+  const texto = (id) => $(id).value.trim() || null;
+  const fila = { patente, marca: texto('a-marca'), modelo: texto('a-modelo'), color: texto('a-color') };
+  $('a-guardar').disabled = true;
+  const { error } = editando
+    ? await sb.from('vehiculos_vecinos').update(fila).eq('id', editando.id)
+    : await sb.from('vehiculos_vecinos').insert({ ...fila, casa_id: casa?.id });
+  $('a-guardar').disabled = false;
+  if (error) {
+    $('a-error').textContent = error.code === '23505' ? 'Ya cargaste esa patente.'
+      : Object.entries(ERR_AUTO).find(([k]) => error.message?.includes(k))?.[1] ?? 'No se pudo guardar. Probá de nuevo.';
+    return;
+  }
+  cerrarHoja();
+  toast(editando ? 'Auto actualizado' : 'Auto agregado');
+  cargar();
+});
+
+$('a-eliminar').addEventListener('click', async () => {
+  if (!editando || !confirm(`¿Eliminar ${formatearPatente(editando.patente)}? La garita lo va a tratar como un auto que no es del barrio.`)) return;
+  const { error } = await sb.from('vehiculos_vecinos').delete().eq('id', editando.id);
+  if (error) { $('a-error').textContent = 'No se pudo eliminar. Probá de nuevo.'; return; }
+  cerrarHoja();
+  toast('Auto eliminado');
+  cargar();
+});
+
 // ---------- avisar visitas ----------
 function llenarDias() {
   $('v-dia').innerHTML = [0, 1, 2, 3, 4, 5, 6].map((n) => {
@@ -187,16 +285,19 @@ function llenarDias() {
 
 $('form-visita').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const patente = normalizarPatente($('v-patente').value);
-  if (!/^[A-Z0-9]{5,8}$/.test(patente)) { $('v-error').textContent = 'Revisá la patente: tiene que tener entre 5 y 8 letras o números.'; $('v-patente').focus(); return; }
-  if (autos.some((a) => a.patente === patente)) { $('v-error').textContent = 'Esa patente ya es de uno de tus autos.'; return; }
+  const nombre = $('v-nombre').value.trim().replace(/\s+/g, ' ');
+  if (nombre.split(' ').length < 2 || nombre.length < 4) { $('v-error').textContent = 'Escribí el nombre y el apellido de la visita.'; $('v-nombre').focus(); return; }
+  const patente = normalizarPatente($('v-patente').value) || null; // la patente es opcional
+  if (patente && !/^[A-Z0-9]{5,8}$/.test(patente)) { $('v-error').textContent = 'Revisá la patente: tiene que tener entre 5 y 8 letras o números. Si no la sabés, dejala vacía.'; $('v-patente').focus(); return; }
+  if (patente && autos.some((a) => a.patente === patente)) { $('v-error').textContent = 'Esa patente ya es de uno de tus autos.'; return; }
   $('v-error').textContent = '';
-  const { error } = await sb.from('visitas_esperadas').insert({ patente, nombre: $('v-nombre').value.trim() || null, dia: $('v-dia').value });
+  const { error } = await sb.from('visitas_esperadas').insert({ nombre, patente, motivo: $('v-motivo').value.trim() || null, dia: $('v-dia').value });
   if (error) { toast('No se pudo avisar. Probá de nuevo.', true); return; }
-  $('v-patente').value = ''; $('v-nombre').value = '';
+  $('v-patente').value = ''; $('v-nombre').value = ''; $('v-motivo').value = '';
   toast('Visita avisada a la garita');
   cargar();
 });
+$('v-nombre').addEventListener('input', () => { $('v-error').textContent = ''; });
 $('v-patente').addEventListener('input', () => { $('v-error').textContent = ''; });
 
 $('lista-esperadas').addEventListener('click', async (e) => {
