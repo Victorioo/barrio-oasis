@@ -5,6 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#ffffff">
+  <script>
+    // Antes de dibujar nada: si hay una sesión de otro tipo de usuario, ir directo a su vista.
+    (function () {
+      try {
+        var rol = null;
+        for (var k in localStorage) {
+          if (/^sb-.*-auth-token$/.test(k)) {
+            var s = JSON.parse(localStorage.getItem(k) || 'null');
+            rol = s && s.user && s.user.app_metadata && s.user.app_metadata.rol || null;
+          }
+        }
+        if (!rol) rol = localStorage.getItem('rol');
+        if (rol === 'guardia') location.replace('index.html');
+      } catch (e) {}
+    })();
+  </script>
   <title>Mi casa · Barrio Oasis</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192.png">

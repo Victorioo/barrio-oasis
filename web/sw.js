@@ -1,7 +1,7 @@
 // Service worker: deja la app (HTML/JS/CSS) disponible sin señal.
 // Los datos (patentes, movimientos) viven en IndexedDB, no acá.
 // Al publicar una versión nueva, subí el número de CACHE.
-const CACHE = 'garita-v35';
+const CACHE = 'garita-v36';
 const ARCHIVOS = [
   './',
   'index.html',
@@ -35,27 +35,30 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Stale-while-revalidate para los archivos propios; la API de Supabase (otro origen) no se toca.
+// Archivos propios (red primero, con respaldo guardado); la API de Supabase (otro origen) no se toca.
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
 
+  // Red primero (máx. 3 s) para que una versión nueva se vea ya en la primera apertura; sin señal, lo guardado.
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
-      const guardado = await cache.match(req, { ignoreSearch: true });
-      const red = fetch(req)
-        .then((resp) => {
-          if (resp.ok) cache.put(req, resp.clone());
-          return resp;
-        })
-        .catch(() => null);
-      if (guardado) {
-        e.waitUntil(red);
-        return guardado;
+      const red = fetch(req).then((resp) => {
+        if (resp.ok) cache.put(req, resp.clone());
+        return resp;
+      });
+      const limite = new Promise((_, no) => setTimeout(no, 3000));
+      try {
+        return await Promise.race([red, limite]);
+      } catch {
+        e.waitUntil(red.catch(() => {}));
+        const guardado = await cache.match(req, { ignoreSearch: true });
+        if (guardado) return guardado;
+        try { return await red; } catch {
+          return req.mode === 'navigate' ? (await cache.match('index.html')) || Response.error() : Response.error();
+        }
       }
-      const resp = await red;
-      return resp || (req.mode === 'navigate' ? cache.match('index.html') : Response.error());
     })
   );
 });
