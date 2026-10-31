@@ -565,6 +565,10 @@ function armarTeclado() {
   });
 }
 
+// Mismo criterio que scripts/crear-guardias.mjs: minúsculas, sin acentos ni espacios.
+const normalizarUsuario = (s) =>
+  String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9._-]/g, '');
+
 function tocarTecla(k) {
   $('login-error').textContent = '';
   if (k === 'del') pin = pin.slice(0, -1);
@@ -595,6 +599,12 @@ async function mostrarApp() {
 
 async function entrar(e) {
   e.preventDefault();
+  const usuario = normalizarUsuario($('l-usuario').value);
+  if (!usuario) {
+    $('login-error').textContent = 'Ingresá tu usuario.';
+    $('l-usuario').focus();
+    return;
+  }
   if (pin.length < 6) {
     $('login-error').textContent = 'Ingresá los 6 números del PIN.';
     return;
@@ -604,13 +614,14 @@ async function entrar(e) {
     return;
   }
   $('login-error').textContent = '';
-  const { error } = await sb.auth.signInWithPassword({ email: CONFIG.GUARDIA_EMAIL, password: pin });
+  const { error } = await sb.auth.signInWithPassword({ email: `${usuario}@${CONFIG.GUARDIAS_DOMINIO}`, password: pin });
   if (error) {
-    $('login-error').textContent = error.status === 0 || /fetch/i.test(error.message) ? 'No hay conexión con el servidor.' : 'PIN incorrecto.';
+    $('login-error').textContent = error.status === 0 || /fetch/i.test(error.message) ? 'No hay conexión con el servidor.' : 'Usuario o PIN incorrecto.';
     pin = '';
     pintarPin();
     return;
   }
+  try { localStorage.setItem('guardia', usuario.charAt(0).toUpperCase() + usuario.slice(1)); } catch {}
   mostrarApp();
 }
 
@@ -648,6 +659,7 @@ async function iniciar() {
     pintarEstado();
   });
   $('form-login').addEventListener('submit', entrar);
+  $('l-usuario').addEventListener('input', (e) => { e.target.value = normalizarUsuario(e.target.value); $('login-error').textContent = ''; });
   const modoLogin = (guardia) => {
     $('seg-guardia').setAttribute('aria-pressed', String(guardia));
     $('seg-vecino').setAttribute('aria-pressed', String(!guardia));
@@ -656,7 +668,7 @@ async function iniciar() {
   $('seg-guardia').addEventListener('click', () => modoLogin(true));
   $('seg-vecino').addEventListener('click', () => { location.href = 'vecino.html'; });
   document.addEventListener('keydown', (e) => {
-    if ($('vista-login').hidden || e.metaKey || e.ctrlKey) return;
+    if ($('vista-login').hidden || e.metaKey || e.ctrlKey || e.target.id === 'l-usuario') return;
     if (/^\d$/.test(e.key)) tocarTecla(e.key);
     else if (e.key === 'Backspace') tocarTecla('del');
   });

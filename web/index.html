@@ -62,8 +62,14 @@
 
     <form id="form-login" class="login-form">
       <div class="login-titulos">
-        <h2>Ingresá tu PIN de guardia</h2>
+        <h2>Ingresá con tu usuario y PIN</h2>
         <p>Garita principal</p>
+      </div>
+
+      <div>
+        <label class="etiqueta" for="l-usuario">Usuario</label>
+        <input id="l-usuario" class="input" type="text" autocapitalize="none" autocorrect="off" spellcheck="false"
+               autocomplete="username" enterkeyhint="done" maxlength="30" placeholder="Ej: colazo">
       </div>
 
       <div id="pin-puntos" class="pin-puntos" role="status" aria-label="0 de 6 números ingresados"></div>

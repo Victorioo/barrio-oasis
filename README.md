@@ -23,7 +23,7 @@ Sin build, sin `npm install`: son archivos estáticos.
    - Desactivá **Allow new users to sign up**.
    - Desactivá **Confirm email**.
 4. **Authentication → Users → Add user → Create new user** (tildá *Auto Confirm User*):
-   - Guardia: mail `guardia@garita.app` (no hace falta que exista) y como contraseña el **PIN** (**exactamente 6 dígitos**, porque el teclado de la app es de 6; no uses `123456`).
+   - Guardias: cada uno entra con **usuario + PIN de 6 dígitos** (ej. `colazo` / PIN). Se crean o se les cambia el PIN con `node scripts/crear-guardias.mjs colazo:NNNNNN otro:NNNNNN` (con `SUPABASE_URL` y `SUPABASE_SERVICE_KEY`); `--borrar=usuario` da de baja. Internamente el mail es `usuario@guardias.garita.app`.
    - Admin: tu mail real y una contraseña larga.
 5. De vuelta en **SQL Editor**, asigná los roles (cambiá los mails si usaste otros):
 
