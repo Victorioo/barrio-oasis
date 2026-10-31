@@ -135,6 +135,7 @@ function pintarPrivacidad() {
   const patentes = autos.map((a) => formatearPatente(a.patente)).join(' · ') || '—';
   filas.unshift(`<li><div class="priv-fila"><span class="priv-texto"><span class="priv-etiqueta">Patente</span><span class="priv-valor mono">${esc(patentes)}</span></span>
     <span class="priv-fija">${ICONO('lock')}Siempre visible</span></div></li>`);
+  filas.push(`<li class="priv-nota">${ICONO('pencil')}<p>¿Cambió tu nombre, tu teléfono o tu casa? Avisale a la administración. Tus autos los editás vos desde acá.</p></li>`);
   $('datos-casa').innerHTML = filas.join('');
 }
 

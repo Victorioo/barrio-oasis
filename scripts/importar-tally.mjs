@@ -69,6 +69,20 @@ const ordenado = (s) => {
   return t.toLowerCase().replace(/(^|[\s.\-/])([a-záéíóúñ])/g, (_, a, b) => a + b.toUpperCase());
 };
 
+// Nombres de personas: "josefina Lendich" -> "Josefina Lendich"; "CLAUDIO SUAS" -> "Claudio Suas".
+// Las palabras que ya vienen con mayúscula inicial se respetan ("De Melo", "Del Pozo").
+const CONECTORES = new Set(['de', 'del', 'la', 'las', 'los', 'y', 'e', 'da', 'di', 'van', 'von']);
+const nombrePropio = (s) => {
+  const t = limpio(s);
+  if (!t) return t;
+  const todoMayus = t === t.toUpperCase() && /[A-ZÁÉÍÓÚÑ]/.test(t);
+  return t.split(' ').map((p, i) => {
+    const bajo = p.toLowerCase();
+    if (todoMayus || p === bajo || (p === p.toUpperCase() && p.length > 1)) return i > 0 && CONECTORES.has(bajo) ? bajo : bajo.replace(/(^|[.\-'])([a-záéíóúñ])/g, (_, a, b) => a + b.toUpperCase());
+    return p;
+  }).join(' ');
+};
+
 // ---------- armado de datos ----------
 export function leer(texto) {
   const [cabecera, ...filas] = parsearCsv(texto);
@@ -113,7 +127,7 @@ export function leer(texto) {
     const casa = casas.get(clave);
     if (casa.filasOrigen) avisos.push(`Línea ${linea}: Mz ${manzana} Lote ${lote}${info ? ' (' + info + ')' : ''} repetida en el CSV, se combinan los datos.`);
     casa.filasOrigen = (casa.filasOrigen ?? 0) + 1;
-    casa.nombre ??= ordenado(get(f, iNombre)) || null;
+    casa.nombre ??= nombrePropio(get(f, iNombre)) || null;
     casa.telefono ??= limpio(get(f, iTel)) || null;
 
     for (const a of autos) {
@@ -127,7 +141,7 @@ export function leer(texto) {
           patente,
           marca: limpio(get(f, a.iMarca)) || null,
           modelo: ordenado(get(f, a.iModelo)) || null,
-          color: ordenado(get(f, a.iColor)) || null,
+          color: (/^sin (color|dato)$/i.test(limpio(get(f, a.iColor))) ? '' : ordenado(get(f, a.iColor))) || null,
         });
     }
   });
@@ -156,7 +170,8 @@ async function rest(ruta, cuerpo, prefer) {
     body: JSON.stringify(cuerpo),
   });
   if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
-  return r.status === 204 ? null : r.json();
+  const texto = await r.text();
+  return texto ? JSON.parse(texto) : null;
 }
 
 const en_lotes = (arr, n) => Array.from({ length: Math.ceil(arr.length / n) }, (_, i) => arr.slice(i * n, i * n + n));

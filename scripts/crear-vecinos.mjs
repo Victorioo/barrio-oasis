@@ -4,7 +4,10 @@
 //
 // Uso:
 //   SUPABASE_URL=https://xxxx.supabase.co SUPABASE_SERVICE_KEY=eyJ... \
-//     node scripts/crear-vecinos.mjs [pines-vecinos.csv] [--dry-run]
+//     node scripts/crear-vecinos.mjs [pines-vecinos.csv] [--dry-run] [--pin=123456]
+//
+// Sin --pin, cada casa recibe un PIN distinto al azar. Con --pin=NNNNNN todas reciben el mismo
+// (más cómodo, pero cualquiera que conozca ese PIN y el teléfono de un vecino puede entrar a su cuenta).
 //
 // - Corre en TU compu. La service key nunca va al frontend ni a Git.
 // - Se puede correr de nuevo: las casas que ya tienen cuenta se saltean (su PIN no cambia).
@@ -17,10 +20,12 @@ import { randomInt } from 'node:crypto';
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 const salida = args.find((a) => !a.startsWith('--')) ?? 'pines-vecinos.csv';
+const pinFijo = args.find((a) => a.startsWith('--pin='))?.slice(6) ?? null;
+if (pinFijo !== null && !/^\d{6}$/.test(pinFijo)) { console.error('✖ --pin tiene que ser de 6 números, por ejemplo --pin=123456'); process.exit(1); }
 const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = process.env;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-  console.error('Uso: SUPABASE_URL=... SUPABASE_SERVICE_KEY=... node scripts/crear-vecinos.mjs [salida.csv] [--dry-run]');
+  console.error('Uso: SUPABASE_URL=... SUPABASE_SERVICE_KEY=... node scripts/crear-vecinos.mjs [salida.csv] [--dry-run] [--pin=123456]');
   process.exit(1);
 }
 
@@ -51,7 +56,7 @@ for (const c of casas) {
   usados.set(email, nombreCasa);
   if (dryRun) { creadas++; continue; }
 
-  const pin = pinAzar();
+  const pin = pinFijo ?? pinAzar();
   const r = await fetch(`${base}/auth/v1/admin/users`, {
     method: 'POST',
     headers: cabeceras,

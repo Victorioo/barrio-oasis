@@ -82,3 +82,5 @@ button.priv-fila:hover { background: var(--hover); }
 [aria-checked="true"] .interruptor::after { transform: translateX(20px); }
 #datos-casa li { padding: 0; }
 #datos-casa .priv-fila { border-top: 0; }
+#datos-casa li.priv-nota { display: flex; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); background: var(--bg); font-size: 14px; line-height: 20px; color: var(--text-2); }
+#datos-casa li.priv-nota .i { width: 20px; height: 20px; color: var(--primary-text); margin-top: 1px; }
