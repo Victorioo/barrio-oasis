@@ -351,9 +351,10 @@ async function activarAvisos() {
     const sub = (await reg.pushManager.getSubscription())
       ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64aBytes(CONFIG.VAPID_PUBLICA) }));
     const j = sub.toJSON();
-    const { error } = await sb.from('push_suscripciones').upsert(
-      { endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth },
-      { onConflict: 'endpoint' });
+    // La tabla no permite UPDATE (solo INSERT/SELECT/DELETE): se reemplaza en vez de hacer upsert.
+    await sb.from('push_suscripciones').delete().eq('endpoint', j.endpoint);
+    const { error } = await sb.from('push_suscripciones').insert(
+      { endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth });
     if (error) throw error;
     pintarAvisos('activas');
     toast('Listo: te vamos a avisar cuando entre un auto a tu casa');
