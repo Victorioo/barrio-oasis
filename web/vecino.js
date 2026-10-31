@@ -89,6 +89,7 @@ async function entrar(e) {
     pin = ''; pintarPin();
     return;
   }
+  try { localStorage.setItem('rol', 'vecino'); } catch {}
   mostrarApp();
 }
 
@@ -404,6 +405,8 @@ async function iniciar() {
 
   let sesion = null;
   try { ({ data: { session: sesion } } = await sb.auth.getSession()); } catch { /* sin señal */ }
+  // Un guardia que abre vecino.html vuelve a su vista.
+  if (sesion?.user?.app_metadata?.rol === 'guardia') { location.replace('index.html'); return; }
   if (sesion?.user?.app_metadata?.rol === 'vecino' || (!sesion && haySesionGuardada())) mostrarApp();
   else mostrarLogin();
 }
