@@ -112,8 +112,10 @@ Cuentas de vecinos, visitas autorizadas, panel de sospechosos y fotos de patente
   admin puede leer ese historial.
 - **Puesta en marcha (una sola vez):**
   1. **SQL Editor** → pegá y corré `supabase/migraciones/2026-11_alertas_seguridad.sql`.
-  2. Desplegá la función: `supabase functions deploy notificar-alerta` (o desde el panel, en Edge Functions).
-     No hace falta ningún secreto nuevo: reusa `notif_secreto` y las claves VAPID que ya están configuradas.
+  2. Desplegá la función: `supabase functions deploy notificar-alerta --no-verify-jwt` (el flag es imprescindible:
+     la llama el trigger de la base sin ningún token, solo con el secreto compartido; sin el flag, Supabase la
+     rechaza con 401 y el aviso no le llega a nadie). No hace falta ningún secreto nuevo: reusa `notif_secreto`
+     y las claves VAPID que ya están configuradas.
 - **Visitas avisadas:** nombre y apellido obligatorios, patente opcional.
 
 ## Usuario propio y recuperación de PIN por mail
