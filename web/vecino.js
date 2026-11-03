@@ -406,7 +406,7 @@ async function cargar() {
   if ([c, a, v, ll, co].some((r) => r.error)) toast('No se pudieron cargar los datos. Probá de nuevo.', true);
   casa = c.data?.[0] ?? null;
   autos = a.data ?? []; esperadas = v.data ?? []; llegadas = ll.data ?? []; consultas = co.data ?? [];
-  pintarCasa(); pintarVisitas(); pintarConsultas();
+  pintarCasa(); pintarProximas(); pintarVisitas(); pintarConsultas();
 }
 
 // ---------- qué ve la garita ----------
@@ -470,17 +470,33 @@ $('datos-casa').addEventListener('change', async (e) => {
 
 // ---------- pintado ----------
 const chapaTxt = (p) => esc(formatearPatente(p));
+function saludoPrevio() {
+  const h = new Date().getHours();
+  return h < 12 ? 'Buenos días' : h < 20 ? 'Buenas tardes' : 'Buenas noches';
+}
 function pintarCasa() {
   if (!casa) {
     $('top-casa').textContent = '';
+    $('saludo-previa').textContent = saludoPrevio();
     $('saludo').textContent = 'Hola';
+    $('banner-texto').textContent = '';
     return;
   }
   const info = String(casa.info_adicional ?? '').trim();
   const lote = `Mz ${casa.manzana} · Lote ${casa.lote}${info ? ' · ' + info : ''}`;
   $('top-casa').textContent = lote;
-  $('saludo').textContent = casa.nombre ? `Hola, ${casa.nombre.split(' ')[0]}` : 'Hola';
+  const apellido = casa.nombre ? casa.nombre.trim().split(/\s+/).pop() : '';
+  $('saludo-previa').textContent = apellido ? `${saludoPrevio()}, familia ${apellido}` : saludoPrevio();
+  $('saludo').textContent = `Hola, Manzana ${casa.manzana} · Lote ${casa.lote}`;
   pintarPrivacidad();
+
+  const hoy = new Date().toDateString();
+  const entradasHoy = llegadas.filter((m) => m.tipo === 'entrada' && new Date(m.created_at).toDateString() === hoy).length;
+  $('banner-texto').textContent = entradasHoy
+    ? `Hoy ${entradasHoy === 1 ? 'entró 1 visita' : `entraron ${entradasHoy} visitas`} a tu casa.`
+    : 'Hoy no entraron visitas a tu casa.';
+
+  $('acceso-autos-total').textContent = plural(autos.length, 'registrado', 'registrados');
   $('total-autos').textContent = plural(autos.length, 'auto', 'autos');
   $('lista-autos').innerHTML = autos.length ? autos.map((a) => `
     <li><span class="auto-icono">${ICONO('car')}</span>
@@ -489,6 +505,18 @@ function pintarCasa() {
         <p class="fila-det">${a.color ? `<span class="swatch" style="display:inline-block;vertical-align:-2px;background:${colorCss(a.color)}"></span> ${esc(a.color)} · ` : ''}<b>${chapaTxt(a.patente)}</b></p>
       </div>
       <button class="btn-icono" type="button" data-editar="${esc(a.id)}" aria-label="Editar ${esc([a.marca, a.modelo].filter(Boolean).join(' ') || 'auto')} ${chapaTxt(a.patente)}">${ICONO('pencil')}</button></li>`).join('') : '<li class="vacio">No hay autos registrados.</li>';
+}
+
+function pintarProximas() {
+  const proximas = esperadas.slice(0, 3);
+  $('lista-proximas').innerHTML = proximas.length
+    ? proximas.map((v) => `
+      <li><span class="chip-patente">${v.patente ? chapaTxt(v.patente) : '—'}</span>
+        <div class="fila-datos">
+          <p class="fila-quien">${esc(v.nombre)}</p>
+          <p class="fila-det">${esc(etiquetaDia(v.dia))}${etiquetaDia(v.dia) === 'Hoy' ? ' · esperando' : ''}${v.motivo ? ' · ' + esc(v.motivo) : ''}</p>
+        </div></li>`).join('')
+    : '<li class="vacio">No avisaste ninguna visita.</li>';
 }
 
 function pintarVisitas() {
@@ -689,6 +717,9 @@ function ir(tab) {
   window.scrollTo(0, 0);
 }
 document.querySelector('.tabbar').addEventListener('click', (e) => { const b = e.target.closest('[data-ir]'); if (b) ir(b.dataset.ir); });
+$('acceso-visita').addEventListener('click', () => { ir('visitas'); $('v-nombre').focus(); });
+$('ver-todas-visitas').addEventListener('click', () => ir('visitas'));
+$('acceso-autos').addEventListener('click', () => $('seccion-autos').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 $('btn-perfil').addEventListener('click', () => ir('perfil'));
 $('btn-perfil-volver').addEventListener('click', () => ir('casa'));
 $('btn-salir').addEventListener('click', salir);

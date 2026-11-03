@@ -6,6 +6,39 @@ body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
 .saludo h1 { font-size: 24px; line-height: 29px; font-weight: 700; letter-spacing: -.01em; }
 .saludo p { margin-top: var(--sp-1); font-size: 15px; line-height: 22px; color: var(--text-2); }
 
+/* saludo de Mi casa */
+.saludo-casa { display: flex; flex-direction: column; gap: 2px; }
+.saludo-casa p { font-size: 15px; line-height: 20px; color: var(--text-2); }
+.saludo-casa h1 { font-size: 24px; line-height: 30px; font-weight: 800; letter-spacing: -.01em; }
+
+/* cartel "todo tranquilo" */
+.banner-tranquilo { display: flex; align-items: flex-start; gap: var(--sp-3); padding: var(--sp-4); background: var(--ok-bg); border-color: var(--ok-border); }
+.banner-tranquilo .i { flex: none; width: 22px; height: 22px; margin-top: 1px; color: var(--ok-text); }
+.banner-tranquilo p { font-size: 15px; line-height: 21px; color: var(--ok-text); }
+
+/* accesos rápidos */
+.accesos-rapidos { display: grid; grid-template-columns: 1.25fr 1fr; gap: var(--sp-3); }
+.acceso { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-2); min-height: 112px; padding: var(--sp-4); border: 1px solid var(--border); border-radius: var(--r-md); text-align: left; cursor: pointer; touch-action: manipulation; }
+.acceso-icono { display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--r-sm); }
+.acceso-icono .i { width: 20px; height: 20px; }
+.acceso-titulo { font-size: 16px; line-height: 21px; font-weight: 700; }
+.acceso-sub { font-size: 13px; line-height: 18px; }
+.acceso-primario { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+.acceso-primario:hover { background: var(--primary-hover); }
+.acceso-primario:active { background: var(--primary-active); }
+.acceso-primario .acceso-icono { background: rgba(255, 255, 255, .18); color: var(--on-primary); }
+.acceso-primario .acceso-sub { color: var(--on-primary); opacity: .85; }
+.acceso-secundario { background: var(--surface); color: var(--text); }
+.acceso-secundario:hover { background: var(--hover); }
+.acceso-secundario:active { background: var(--active); }
+.acceso-secundario .acceso-icono { background: var(--primary-subtle); color: var(--primary-text); }
+.acceso-secundario .acceso-sub { color: var(--text-2); }
+
+/* próximas visitas */
+.link-ver-todas { border: 0; background: transparent; padding: 0; color: var(--primary-text); font-size: 14px; font-weight: 600; cursor: pointer; }
+.link-ver-todas:hover { text-decoration: underline; }
+.proximas-visitas .chip-patente { flex: none; display: grid; place-items: center; min-width: 76px; height: 32px; padding: 0 8px; border-radius: var(--r-sm); background: var(--primary-subtle); color: var(--primary-text); font: 700 13px/1 var(--font-mono); letter-spacing: .02em; }
+
 .opcional { font-weight: 500; color: var(--text-2); }
 .patente-input-s { height: 84px; }
 .patente-input-s input { font-size: 32px; }
