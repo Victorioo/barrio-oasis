@@ -238,10 +238,17 @@ create policy consultas_admin on public.consultas_vecinos
 --   visitas_esperadas: nombre obligatorio, patente opcional
 --   visitas_esperadas.motivo (opcional, hasta 120 caracteres)
 
--- Migración "usuario_y_recuperacion_pin" (pendiente de correr: ver supabase/migraciones/2026-11_usuario_y_recuperacion_pin.sql):
+-- Migración "usuario_y_recuperacion_pin" (ya aplicada: ver supabase/migraciones/2026-11_usuario_y_recuperacion_pin.sql):
 --   casas.usuario / email_recuperacion / auth_user_id
 --   recuperaciones_pin  -> códigos de 6 números para recuperar el PIN por mail (solo la Edge Function la toca)
 --   email_de_usuario(usuario) -> resuelve usuario -> mail interno de Auth (anon la necesita para loguearse)
 --   mi_usuario() / guardar_usuario(usuario) / guardar_email_recuperacion(email)
 --   Edge Function recuperar-pin (supabase/functions/recuperar-pin) manda el código por Resend y cambia el PIN.
 --   El teléfono sigue funcionando como entrada alternativa: no se tocó nada de Auth existente.
+
+-- Migración "alias_del_vecino" (ya aplicada: ver supabase/migraciones/2026-11_alias_del_vecino.sql):
+--   casas.alias (opcional, 1 a 24 caracteres)
+--   guardar_alias(alias) -> el vecino lo pone o lo borra (mandar '' lo borra)
+--   mi_casa() se recreó para devolver también "alias"
+--   vehiculos_garita() ahora muestra coalesce(alias, nombre): si el vecino puso alias, la garita
+--   ve el alias en vez del nombre completo (solo aplica cuando mostrar_nombre = true)

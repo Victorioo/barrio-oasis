@@ -423,9 +423,15 @@ function pintarPrivacidad() {
   };
   const filas = CAMPOS_PRIV.map((k) => {
     const visible = !!casa[`mostrar_${k}`];
-    return `<li><button type="button" class="priv-fila ${visible ? '' : 'priv-oculto'}" role="switch" aria-checked="${visible}" data-priv="${k}">
+    const fila = `<li><button type="button" class="priv-fila ${visible ? '' : 'priv-oculto'}" role="switch" aria-checked="${visible}" data-priv="${k}">
       <span class="priv-texto"><span class="priv-etiqueta">${esc(valores[k][0])}${visible ? '' : ' · oculto'}</span><span class="priv-valor">${esc(valores[k][1])}</span></span>
       <span class="interruptor" aria-hidden="true"></span></button></li>`;
+    if (k !== 'nombre') return fila;
+    return fila + `<li class="priv-alias-fila">
+      <label class="etiqueta" for="input-alias">Alias para la garita (opcional)</label>
+      <input id="input-alias" class="input" type="text" maxlength="24" placeholder="Ej: Javo" value="${esc(casa.alias ?? '')}">
+      <p class="ayuda">Si lo completás, el guardia ve este alias en vez de tu nombre completo.</p>
+    </li>`;
   });
   const patentes = autos.map((a) => formatearPatente(a.patente)).join(' · ') || '—';
   filas.unshift(`<li><div class="priv-fila"><span class="priv-texto"><span class="priv-etiqueta">Patente</span><span class="priv-valor mono">${esc(patentes)}</span></span>
@@ -445,6 +451,21 @@ $('datos-casa').addEventListener('click', async (e) => {
   });
   if (error) { casa[clave] = !casa[clave]; pintarPrivacidad(); toast('No se pudo guardar. Probá de nuevo.', true); return; }
   toast(casa[clave] ? 'Ahora el guardia lo ve' : 'Ahora el guardia no lo ve');
+});
+
+$('datos-casa').addEventListener('keydown', (e) => {
+  if (e.target.id === 'input-alias' && e.key === 'Enter') e.target.blur();
+});
+
+$('datos-casa').addEventListener('change', async (e) => {
+  if (e.target.id !== 'input-alias' || !casa) return;
+  const anterior = casa.alias ?? null;
+  const valor = e.target.value.trim();
+  casa.alias = valor || null;
+  const { error } = await sb.rpc('guardar_alias', { p_alias: valor });
+  if (error) { casa.alias = anterior; pintarPrivacidad(); toast('No se pudo guardar el alias. Probá de nuevo.', true); return; }
+  pintarPrivacidad();
+  toast(valor ? 'Alias guardado' : 'Alias borrado');
 });
 
 // ---------- pintado ----------

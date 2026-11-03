@@ -84,3 +84,5 @@ button.priv-fila:hover { background: var(--hover); }
 #datos-casa .priv-fila { border-top: 0; }
 #datos-casa li.priv-nota { display: flex; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); background: var(--bg); font-size: 14px; line-height: 20px; color: var(--text-2); }
 #datos-casa li.priv-nota .i { width: 20px; height: 20px; color: var(--primary-text); margin-top: 1px; }
+#datos-casa li.priv-alias-fila { display: flex; flex-direction: column; gap: var(--sp-1); padding: var(--sp-2) var(--sp-4) var(--sp-3); background: var(--bg); }
+#datos-casa li.priv-alias-fila .ayuda { margin: 0; }

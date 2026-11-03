@@ -98,6 +98,9 @@ Cuentas de vecinos, visitas autorizadas, panel de sospechosos y fotos de patente
 - **Qué ve la garita (lo decide cada vecino):** en "Mi casa" el vecino activa o apaga nombre, teléfono, vehículo y casa. La patente
   siempre se ve. Por defecto la garita ve vehículo y casa, y NO ve nombre ni teléfono. Lo que el vecino oculta no llega al celular
   de la garita (no se descarga), y el cambio se aplica en la próxima sincronización (menos de una hora).
+- **Alias en vez del nombre completo:** en "Mi casa", debajo del nombre, el vecino puede poner un alias (ej: "Javo", hasta 24
+  caracteres). Si lo pone y además tiene el nombre visible, la garita ve el alias en vez del nombre completo. Sin alias, todo
+  sigue como antes. Migración: `supabase/migraciones/2026-11_alias_del_vecino.sql` (ya aplicada).
 - **Visitas avisadas:** nombre y apellido obligatorios, patente opcional.
 
 ## Usuario propio y recuperación de PIN por mail
