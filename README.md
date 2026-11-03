@@ -115,6 +115,12 @@ Cuentas de vecinos, visitas autorizadas, panel de sospechosos y fotos de patente
   2. Desplegá la función: `supabase functions deploy notificar-alerta` (o desde el panel, en Edge Functions).
      No hace falta ningún secreto nuevo: reusa `notif_secreto` y las claves VAPID que ya están configuradas.
 - **Visitas avisadas:** nombre y apellido obligatorios, patente opcional.
+- **Detalle de una visita que llegó:** tocando cualquier fila de "Visitas que llegaron" (o la notificación push de
+  una entrada) se abre un detalle con patente, vehículo, día y hora. Si es una ENTRADA, tiene dos botones: "Sí, lo
+  reconozco" (no hace nada, solo cierra el detalle) y "No reconozco este auto", que avisa a la garita. Ese aviso
+  queda guardado en `movimientos.alerta_vecino` y se ve en la app de la garita, en una sección destacada "Avisos de
+  vecinos" arriba de "Movimientos de hoy" (llega en la siguiente sincronización, hoy cada 5 minutos). Migración:
+  `supabase/migraciones/2026-11_alerta_vecino_desconoce.sql`.
 
 ## Usuario propio y recuperación de PIN por mail
 

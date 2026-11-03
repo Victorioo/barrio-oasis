@@ -79,3 +79,12 @@ button.priv-fila:hover { background: var(--hover); }
 #datos-casa li.priv-nota .i { width: 20px; height: 20px; color: var(--primary-text); margin-top: 1px; }
 #datos-casa li.priv-alias-fila { display: flex; flex-direction: column; gap: var(--sp-1); padding: var(--sp-2) var(--sp-4) var(--sp-3); background: var(--bg); }
 #datos-casa li.priv-alias-fila .ayuda { margin: 0; }
+
+/* visitas que llegaron: fila tocable y su detalle */
+.fila-tocable { cursor: pointer; touch-action: manipulation; }
+.fila-tocable:hover, .fila-tocable:focus-visible { background: var(--hover); }
+.fila-tocable:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.etiqueta-alerta { display: inline-flex; align-items: center; height: 20px; margin-left: var(--sp-2); padding: 0 6px; border-radius: var(--r-sm); background: var(--bad-bg); color: var(--bad-text); font-size: 11px; font-weight: 700; vertical-align: middle; }
+.visita-acciones { display: flex; flex-direction: column; gap: var(--sp-2); }
+.nota-visita-alerta { color: var(--bad-text); }
+.nota-visita-alerta .i { color: var(--bad-text); }

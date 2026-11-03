@@ -99,6 +99,7 @@ async function cargarCache() {
   pendientesN = pend.filter((m) => m.id !== retenidoId).length + consultas.length; // el recién registrado no cuenta mientras se puede deshacer
   pintarEstado();
   pintarLista();
+  pintarAlertas();
 }
 
 // ---------- sincronización ----------
@@ -160,7 +161,7 @@ async function sincronizar(forzar = false) {
     const desde = new Date(Date.now() - CONFIG.DIAS_HISTORIAL * 86400000).toISOString();
     const movHasta = await db.leerMeta('movHasta');
     const ahoraMenos2min = new Date(Date.now() - 120000).toISOString(); // margen por transacciones en vuelo
-    const ms = await traerTodo('movimientos', 'id,patente,tipo,es_vecino,casa_destino_id,created_at,guardia,subido_at,marca,color,detalles', (q) =>
+    const ms = await traerTodo('movimientos', 'id,patente,tipo,es_vecino,casa_destino_id,created_at,guardia,subido_at,marca,color,detalles,alerta_vecino', (q) =>
       movHasta ? q.gt('subido_at', movHasta) : q.gte('created_at', desde)
     );
     await db.fusionarMovimientos(ms, desde);
@@ -513,6 +514,29 @@ function limpiar() {
   $('resultado').innerHTML = '';
   $('patente').value = '';
   mostrarPantalla('principal');
+}
+
+// ---------- avisos de vecinos: "no reconozco este auto" ----------
+function pintarAlertas() {
+  const alertas = movimientos
+    .filter((m) => m.alerta_vecino)
+    .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+  $('seccion-alertas').hidden = !alertas.length;
+  if (!alertas.length) return;
+  $('total-alertas').textContent = `${alertas.length} ${alertas.length === 1 ? 'aviso' : 'avisos'}`;
+  $('lista-alertas').innerHTML = alertas
+    .map((m) => {
+      const casa = casasPorId.get(m.casa_destino_id);
+      const veh = [m.marca, m.color].filter(Boolean).join(' ');
+      return `<li>
+        ${chapa(m.patente, 's')}
+        <div class="fila-datos">
+          <span class="fila-quien">${esc(casa ? nombreCasa(casa) : 'Sin casa indicada')}</span>
+          <span class="fila-det">${esc(hora(m.created_at))} · El vecino no reconoce este auto${veh ? ' · ' + esc(veh) : ''}</span>
+        </div>
+      </li>`;
+    })
+    .join('');
 }
 
 // ---------- lista de hoy ----------

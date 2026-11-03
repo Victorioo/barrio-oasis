@@ -226,6 +226,12 @@ button { font: inherit; }
 .seccion-cab { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: var(--sp-2); }
 .seccion-cab h2 { font-size: 17px; line-height: 24px; font-weight: 700; }
 .seccion-cab p { font-size: 14px; color: var(--text-2); }
+.seccion-cab-alerta h2 { display: flex; align-items: center; gap: 6px; color: var(--bad-text); }
+.seccion-cab-alerta h2 .i { width: 20px; height: 20px; }
+.seccion-cab-alerta p { color: var(--bad-text); font-weight: 600; }
+.tabla-alertas { border-color: var(--bad-border); }
+.tabla-alertas li { border-top-color: var(--bad-border); }
+.tabla-alertas li:first-child { border-top: 0; }
 .tabla { overflow: hidden; box-shadow: none; }
 .tabla li { display: flex; align-items: center; gap: var(--sp-3); padding: 10px var(--sp-3); border-top: 1px solid var(--border); }
 .tabla li:first-child { border-top: 0; }

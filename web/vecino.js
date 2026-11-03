@@ -507,8 +507,9 @@ function pintarVisitas() {
     ? llegadas.map((m) => {
       const d = new Date(m.created_at);
       const auto = [m.marca, m.color?.toLowerCase()].filter(Boolean).join(' ');
-      return `<li><div class="fila-datos">
-          <p class="fila-quien"><span class="mono">${chapaTxt(m.patente)}</span></p>
+      return `<li class="fila-tocable" data-visita="${esc(m.id)}" role="button" tabindex="0" aria-label="Ver el detalle de esta visita">
+        <div class="fila-datos">
+          <p class="fila-quien"><span class="mono">${chapaTxt(m.patente)}</span>${m.alerta_vecino ? '<span class="etiqueta-alerta">Avisado a la garita</span>' : ''}</p>
           <p class="fila-det">${esc(fechaCorta(d))}${auto ? ' · ' + esc(auto) : ''}</p>
         </div>
         <div class="fila-dir"><span class="dir ${m.tipo === 'entrada' ? 'entra' : 'sale'}">${ICONO(m.tipo === 'entrada' ? 'arrow-in' : 'arrow-out')}${m.tipo === 'entrada' ? 'Entrada' : 'Salida'}</span>
@@ -590,6 +591,70 @@ $('a-eliminar').addEventListener('click', async () => {
   cerrarHoja();
   toast('Auto eliminado');
   cargar();
+});
+
+// ---------- detalle de una visita que llegó ----------
+let detalleVisita = null;
+function chapaGrande(patente) {
+  const num = formatearPatente(patente);
+  return `<div class="patente patente-l" role="img" aria-label="Patente ${esc(num)}">
+    <div class="patente-banda" aria-hidden="true"><span>REPÚBLICA ARGENTINA</span><span class="bandera"></span></div>
+    <div class="patente-num">${esc(num)}</div>
+  </div>`;
+}
+function pintarDetalleVisita() {
+  const m = detalleVisita;
+  if (!m) return;
+  const d = new Date(m.created_at);
+  const auto = [m.marca, m.color].filter(Boolean).join(' ');
+  $('visita-titulo').textContent = m.tipo === 'entrada' ? 'Entró a tu casa' : 'Salió de tu casa';
+  $('visita-chapa').innerHTML = chapaGrande(m.patente);
+  const filas = [
+    `<div><dt>${esc(fechaCorta(d))}</dt><dd>${esc(hhmm(d))}</dd></div>`,
+    auto || m.color ? `<div><dt>Vehículo</dt><dd>${m.color ? `<span class="swatch" style="background:${colorCss(m.color)}"></span>` : ''}${esc(auto || '—')}</dd></div>` : '',
+  ].filter(Boolean);
+  $('visita-datos').innerHTML = filas.join('');
+  const puedeAvisar = m.tipo === 'entrada';
+  $('visita-acciones').hidden = !puedeAvisar || !!m.alerta_vecino;
+  $('visita-alerta-nota').hidden = !(puedeAvisar && m.alerta_vecino);
+  $('visita-error').textContent = '';
+}
+function abrirDetalleVisita(id) {
+  const m = llegadas.find((x) => String(x.id) === String(id));
+  if (!m) return;
+  detalleVisita = m;
+  pintarDetalleVisita();
+  $('hoja-visita').hidden = false;
+}
+const cerrarDetalleVisita = () => { $('hoja-visita').hidden = true; detalleVisita = null; };
+
+$('lista-llegadas').addEventListener('click', (e) => {
+  const li = e.target.closest('[data-visita]');
+  if (li) abrirDetalleVisita(li.dataset.visita);
+});
+$('lista-llegadas').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const li = e.target.closest('[data-visita]');
+  if (!li) return;
+  e.preventDefault();
+  abrirDetalleVisita(li.dataset.visita);
+});
+$('visita-cerrar').addEventListener('click', cerrarDetalleVisita);
+$('hoja-visita').addEventListener('click', (e) => { if (e.target === $('hoja-visita')) cerrarDetalleVisita(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('hoja-visita').hidden) cerrarDetalleVisita(); });
+$('visita-reconozco').addEventListener('click', cerrarDetalleVisita);
+$('visita-desconozco').addEventListener('click', async () => {
+  if (!detalleVisita) return;
+  $('visita-desconozco').disabled = true;
+  const { error } = await sb.rpc('marcar_visita_desconocida', { p_movimiento_id: detalleVisita.id });
+  $('visita-desconozco').disabled = false;
+  if (error) { $('visita-error').textContent = 'No se pudo avisar. Probá de nuevo.'; return; }
+  detalleVisita.alerta_vecino = true;
+  const enLista = llegadas.find((x) => x.id === detalleVisita.id);
+  if (enLista) enLista.alerta_vecino = true;
+  pintarDetalleVisita();
+  pintarVisitas();
+  toast('Avisado a la garita');
 });
 
 // ---------- avisar visitas ----------
@@ -713,9 +778,12 @@ async function mostrarApp() {
   $('vista-login').hidden = true;
   $('vista-app').hidden = false;
   llenarDias();
-  ir(new URLSearchParams(location.search).get('tab') || 'casa');
+  const params = new URLSearchParams(location.search);
+  ir(params.get('tab') || 'casa');
   pintarAvisos(await estadoAvisos());
-  cargar();
+  await cargar();
+  const idVisita = params.get('visita');
+  if (idVisita) abrirDetalleVisita(idVisita);
 }
 
 // Sin señal getSession puede no poder renovar el token: si ya había una sesión guardada, seguimos.

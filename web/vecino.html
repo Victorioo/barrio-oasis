@@ -265,6 +265,24 @@
 
   </div>
 
+  <!-- ============ HOJA: detalle de una visita que llegó ============ -->
+  <div id="hoja-visita" class="hoja" role="dialog" aria-modal="true" aria-labelledby="visita-titulo" hidden>
+    <div class="hoja-cuerpo">
+      <div class="hoja-cab">
+        <h2 id="visita-titulo">Visita</h2>
+        <button type="button" class="btn-icono" id="visita-cerrar" aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button>
+      </div>
+      <div class="chapa-centro" id="visita-chapa"></div>
+      <dl class="card datos" id="visita-datos"></dl>
+      <p id="visita-alerta-nota" class="nota-consulta nota-visita-alerta" hidden><svg class="i"><use href="#i-info"/></svg>Le avisaste a la garita que no reconocés este auto.</p>
+      <div id="visita-acciones" class="visita-acciones" hidden>
+        <button type="button" id="visita-reconozco" class="btn btn-primario"><svg class="i"><use href="#i-check-circle"/></svg>Sí, lo reconozco</button>
+        <button type="button" id="visita-desconozco" class="btn btn-contorno btn-peligro"><svg class="i"><use href="#i-info"/></svg>No reconozco este auto</button>
+      </div>
+      <p id="visita-error" class="error" role="alert"></p>
+    </div>
+  </div>
+
   <!-- ============ HOJA: editar / agregar auto ============ -->
   <div id="hoja-auto" class="hoja" role="dialog" aria-modal="true" aria-labelledby="hoja-titulo" hidden>
     <form id="form-auto" class="hoja-cuerpo" autocomplete="off">

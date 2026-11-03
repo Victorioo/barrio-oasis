@@ -259,3 +259,9 @@ create policy consultas_admin on public.consultas_vecinos
 --   trigger trg_alertas_notificar -> llama por pg_net a la Edge Function notificar-alerta, que le
 --   manda un push a TODAS las suscripciones (push_suscripciones), sin filtrar por casa_id
 --   Reusa el mismo notif_secreto y las mismas claves VAPID que la migración "vista_vecino_y_avisos"
+
+-- Migración "alerta_vecino_desconoce" (ver supabase/migraciones/2026-11_alerta_vecino_desconoce.sql):
+--   movimientos.alerta_vecino / alerta_vecino_en
+--   marcar_visita_desconocida(movimiento_id) -> el vecino avisa que no reconoce el auto de una
+--   ENTRADA a su casa; pisa subido_at para que la garita lo vea en la próxima sincronización
+--   mis_visitas() se recreó para devolver también "alerta_vecino"

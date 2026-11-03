@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
   const payload = JSON.stringify({
     titulo: 'Entró un auto a tu casa',
     cuerpo: [formatearPatente(mov.patente), auto, hora].filter(Boolean).join(' · '),
-    url: '/vecino.html?tab=visitas',
+    url: `/vecino.html?tab=visitas&visita=${mov.id}`,
     tag: `visita-${mov.id}`,
   });
 
