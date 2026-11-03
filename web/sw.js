@@ -1,7 +1,7 @@
 // Service worker: deja la app (HTML/JS/CSS) disponible sin señal.
 // Los datos (patentes, movimientos) viven en IndexedDB, no acá.
 // Al publicar una versión nueva, subí el número de CACHE.
-const CACHE = 'garita-v41';
+const CACHE = 'garita-v42';
 const ARCHIVOS = [
   './',
   'index.html',
@@ -63,7 +63,8 @@ self.addEventListener('fetch', (e) => {
   );
 });
 
-// Notificaciones push: aviso al vecino cuando la garita registra la entrada de un auto a su casa.
+// Notificaciones push: aviso al vecino (entrada de un auto a su casa, o un aviso de seguridad
+// de la garita que le llega a todos). "vibrar" lo manda cada Edge Function según el caso.
 self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch { /* sin cuerpo */ }
@@ -73,7 +74,7 @@ self.addEventListener('push', (e) => {
     badge: 'icons/icon-192.png',
     tag: d.tag,
     renotify: !!d.tag,
-    vibrate: [200, 100, 200],
+    vibrate: d.vibrar || [200, 100, 200],
     silent: false,
     data: { url: d.url || 'vecino.html' },
   }));

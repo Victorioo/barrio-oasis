@@ -101,6 +101,19 @@ Cuentas de vecinos, visitas autorizadas, panel de sospechosos y fotos de patente
 - **Alias en vez del nombre completo:** en "Mi casa", debajo del nombre, el vecino puede poner un alias (ej: "Javo", hasta 24
   caracteres). Si lo pone y además tiene el nombre visible, la garita ve el alias en vez del nombre completo. Sin alias, todo
   sigue como antes. Migración: `supabase/migraciones/2026-11_alias_del_vecino.sql` (ya aplicada).
+
+## Avisos de seguridad (garita → todos los vecinos)
+
+- **Quién los manda:** solo guardia o admin, con el botón de alerta (⚠️) en el header de la garita. Hay 3 niveles:
+  Informativo, Precaución y Emergencia. Emergencia pide un segundo toque para confirmar antes de mandarse.
+- **A quién le llega:** por notificación push, a TODOS los vecinos que tengan la app y los avisos activados (no solo a
+  una casa, a diferencia del aviso de "entró un auto"). A quien no activó avisos no le llega nada.
+- **Trazabilidad:** cada aviso queda en `alertas_seguridad` (nivel, mensaje, qué guardia/admin lo mandó y cuándo); solo
+  admin puede leer ese historial.
+- **Puesta en marcha (una sola vez):**
+  1. **SQL Editor** → pegá y corré `supabase/migraciones/2026-11_alertas_seguridad.sql`.
+  2. Desplegá la función: `supabase functions deploy notificar-alerta` (o desde el panel, en Edge Functions).
+     No hace falta ningún secreto nuevo: reusa `notif_secreto` y las claves VAPID que ya están configuradas.
 - **Visitas avisadas:** nombre y apellido obligatorios, patente opcional.
 
 ## Usuario propio y recuperación de PIN por mail

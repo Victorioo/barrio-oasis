@@ -252,3 +252,10 @@ create policy consultas_admin on public.consultas_vecinos
 --   mi_casa() se recreó para devolver también "alias"
 --   vehiculos_garita() ahora muestra coalesce(alias, nombre): si el vecino puso alias, la garita
 --   ve el alias en vez del nombre completo (solo aplica cuando mostrar_nombre = true)
+
+-- Migración "alertas_seguridad" (pendiente de correr: ver supabase/migraciones/2026-11_alertas_seguridad.sql):
+--   alertas_seguridad (nivel: info/precaucion/emergencia, mensaje, creado_por) -> solo admin la lee
+--   dar_aviso(nivel, mensaje) -> la llama guardia o admin desde "Dar aviso" en la garita
+--   trigger trg_alertas_notificar -> llama por pg_net a la Edge Function notificar-alerta, que le
+--   manda un push a TODAS las suscripciones (push_suscripciones), sin filtrar por casa_id
+--   Reusa el mismo notif_secreto y las mismas claves VAPID que la migración "vista_vecino_y_avisos"

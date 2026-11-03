@@ -350,6 +350,31 @@ button { font: inherit; }
 .toast-deshacer { height: 44px; padding: 0 var(--sp-3); border: 0; border-radius: var(--r-sm); background: transparent; color: inherit; font-size: 15px; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .toast-deshacer:hover { background: rgba(0, 0, 0, .12); }
 
+/* ---------- hoja (modal que sube desde abajo) ---------- */
+.hoja { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; background: rgba(9, 30, 66, .54); }
+.hoja-cuerpo { width: 100%; max-width: 560px; max-height: 92dvh; overflow-y: auto; display: flex; flex-direction: column; gap: var(--sp-4); padding: var(--sp-4) var(--sp-4) calc(var(--sp-5) + env(safe-area-inset-bottom)); background: var(--surface); border-radius: var(--r-md) var(--r-md) 0 0; }
+.hoja-cab { display: flex; align-items: center; justify-content: space-between; }
+.hoja-cab h2 { font-size: 20px; line-height: 28px; font-weight: 700; }
+.hoja-cab .btn-icono { margin-right: -8px; }
+.btn-peligro { color: var(--bad-text); border-color: var(--bad-border); }
+.btn-peligro:hover:not(:disabled) { background: var(--bad-bg); }
+
+/* ---------- aviso de seguridad (garita → todos los vecinos) ---------- */
+.btn-aviso { color: var(--warn-text); }
+.nivel-grupo { display: flex; flex-direction: column; gap: var(--sp-2); }
+.nivel-btn { display: flex; align-items: center; gap: var(--sp-3); width: 100%; min-height: 64px; padding: var(--sp-3) var(--sp-4); border: 2px solid var(--border); border-radius: var(--r-md); background: var(--surface); color: var(--text); text-align: left; cursor: pointer; touch-action: manipulation; }
+.nivel-btn:hover { background: var(--hover); }
+.nivel-punto { width: 14px; height: 14px; border-radius: 50%; flex: none; background: var(--border-strong); }
+.nivel-texto { display: flex; flex-direction: column; gap: 2px; }
+.nivel-texto b { font-size: 16px; font-weight: 700; }
+.nivel-texto span { font-size: 13px; font-weight: 400; color: var(--text-2); }
+.nivel-info[aria-pressed="true"] { border-color: var(--primary); background: var(--primary-subtle); }
+.nivel-info .nivel-punto { background: var(--primary); }
+.nivel-precaucion[aria-pressed="true"] { border-color: var(--warn-border); background: var(--warn-bg); }
+.nivel-precaucion .nivel-punto { background: var(--warn-strong); }
+.nivel-emergencia[aria-pressed="true"] { border-color: var(--bad-border); background: var(--bad-bg); }
+.nivel-emergencia .nivel-punto { background: var(--bad-strong); }
+
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
 select.input { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--text-2) 50%), linear-gradient(135deg, var(--text-2) 50%, transparent 50%); background-position: calc(100% - 22px) 25px, calc(100% - 16px) 25px; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 44px; }

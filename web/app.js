@@ -625,6 +625,49 @@ async function entrar(e) {
   mostrarApp();
 }
 
+// ---------- aviso de seguridad a todos los vecinos ----------
+let avisoNivelArmado = null;
+let avisoArmadoTimer = null;
+
+function abrirHojaAviso() {
+  $('aviso-mensaje').value = '';
+  $('aviso-error').textContent = '';
+  $('nivel-grupo').querySelectorAll('.nivel-btn').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.nivel === 'info')));
+  desarmarAviso();
+  $('hoja-aviso').hidden = false;
+}
+function cerrarHojaAviso() { $('hoja-aviso').hidden = true; }
+
+function desarmarAviso() {
+  avisoNivelArmado = null;
+  clearTimeout(avisoArmadoTimer);
+  $('aviso-enviar').textContent = 'Enviar a todos los vecinos';
+}
+
+async function enviarAviso() {
+  const nivel = $('nivel-grupo').querySelector('[aria-pressed="true"]')?.dataset.nivel || 'info';
+  const mensaje = $('aviso-mensaje').value.trim();
+  if (!mensaje) { $('aviso-error').textContent = 'Escribí un mensaje.'; return; }
+  $('aviso-error').textContent = '';
+
+  // Emergencia pide un segundo toque (evita que un toque accidental le llegue a todo el barrio).
+  if (nivel === 'emergencia' && avisoNivelArmado !== 'emergencia') {
+    avisoNivelArmado = 'emergencia';
+    $('aviso-enviar').textContent = 'Tocá de nuevo para confirmar el envío';
+    clearTimeout(avisoArmadoTimer);
+    avisoArmadoTimer = setTimeout(desarmarAviso, 5000);
+    return;
+  }
+  desarmarAviso();
+
+  $('aviso-enviar').disabled = true;
+  const { error } = await sb.rpc('dar_aviso', { p_nivel: nivel, p_mensaje: mensaje });
+  $('aviso-enviar').disabled = false;
+  if (error) { $('aviso-error').textContent = 'No se pudo enviar. Probá de nuevo.'; return; }
+  cerrarHojaAviso();
+  avisar('Aviso enviado a todos los vecinos');
+}
+
 async function salir() {
   const pend = (await db.pendientes()).length + (await db.consultasPendientes()).length;
   const aviso = pend
@@ -681,6 +724,16 @@ async function iniciar() {
   $('btn-entrada').addEventListener('click', () => registrar('entrada'));
   $('btn-salida').addEventListener('click', () => registrar('salida'));
   $('btn-salir').addEventListener('click', salir);
+
+  $('btn-aviso').addEventListener('click', abrirHojaAviso);
+  $('aviso-cerrar').addEventListener('click', cerrarHojaAviso);
+  $('nivel-grupo').addEventListener('click', (e) => {
+    const b = e.target.closest('.nivel-btn');
+    if (!b) return;
+    $('nivel-grupo').querySelectorAll('.nivel-btn').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    desarmarAviso();
+  });
+  $('aviso-enviar').addEventListener('click', enviarAviso);
 
   window.addEventListener('online', () => { pintarEstado(); sincronizar(); });
   window.addEventListener('offline', pintarEstado);

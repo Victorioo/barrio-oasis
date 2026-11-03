@@ -107,6 +107,7 @@
           <p class="top-titulo">Seguridad Oasis</p>
           <button id="turno" class="top-sub" type="button"></button>
         </div>
+        <button class="btn-icono btn-aviso" id="btn-aviso" type="button" aria-label="Dar aviso a los vecinos"><svg class="i"><use href="#i-alert"/></svg></button>
         <span class="conexion" data-conexion role="status"></span>
       </header>
 
@@ -171,6 +172,39 @@
     <option value="Azul"><option value="Verde"><option value="Amarillo"><option value="Naranja"><option value="Marrón">
     <option value="Beige"><option value="Bordó">
   </datalist>
+
+  <!-- ============ HOJA: dar aviso a los vecinos ============ -->
+  <div id="hoja-aviso" class="hoja" role="dialog" aria-modal="true" aria-labelledby="aviso-titulo" hidden>
+    <div class="hoja-cuerpo">
+      <div class="hoja-cab">
+        <h2 id="aviso-titulo">Dar aviso a los vecinos</h2>
+        <button type="button" class="btn-icono" id="aviso-cerrar" aria-label="Cerrar"><svg class="i"><use href="#i-x"/></svg></button>
+      </div>
+      <p class="ayuda">Le llega como notificación push a todos los vecinos que tengan la app y los avisos activados.</p>
+
+      <div class="nivel-grupo" role="radiogroup" aria-label="Nivel del aviso" id="nivel-grupo">
+        <button type="button" class="nivel-btn nivel-info" data-nivel="info" aria-pressed="true">
+          <span class="nivel-punto" aria-hidden="true"></span>
+          <span class="nivel-texto"><b>Informativo</b><span>Corte de luz, obras, avisos generales</span></span>
+        </button>
+        <button type="button" class="nivel-btn nivel-precaucion" data-nivel="precaucion" aria-pressed="false">
+          <span class="nivel-punto" aria-hidden="true"></span>
+          <span class="nivel-texto"><b>Precaución</b><span>Algo a tener en cuenta, sin peligro inmediato</span></span>
+        </button>
+        <button type="button" class="nivel-btn nivel-emergencia" data-nivel="emergencia" aria-pressed="false">
+          <span class="nivel-punto" aria-hidden="true"></span>
+          <span class="nivel-texto"><b>Emergencia</b><span>Peligro inmediato: incendio, intruso, evacuación</span></span>
+        </button>
+      </div>
+
+      <div>
+        <label class="etiqueta" for="aviso-mensaje">Mensaje</label>
+        <textarea id="aviso-mensaje" class="input input-area" maxlength="140" placeholder="Ej: Corte de luz programado de 14 a 18 hs en todo el barrio."></textarea>
+      </div>
+      <p id="aviso-error" class="error" role="alert"></p>
+      <button id="aviso-enviar" class="btn btn-primario btn-xl" type="button">Enviar a todos los vecinos</button>
+    </div>
+  </div>
 
   <div id="toast" class="toast" role="status" hidden></div>
 
