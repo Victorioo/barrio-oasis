@@ -14,10 +14,12 @@ function iguales(a: string, b: string) {
   return r === 0;
 }
 
+// El nombre de la app ("Seguridad Oasis") ya lo muestra el sistema arriba de la notificación;
+// repetirlo acá queda duplicado.
 const TITULOS: Record<string, string> = {
   info: 'Aviso de la garita',
-  precaucion: '⚠️ Precaución · Seguridad Oasis',
-  emergencia: '🚨 Emergencia · Seguridad Oasis',
+  precaucion: '⚠️ Precaución',
+  emergencia: '🚨 Emergencia',
 };
 // Emergencia vibra más fuerte y más tiempo que un aviso informativo.
 const VIBRACIONES: Record<string, number[]> = {
