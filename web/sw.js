@@ -1,7 +1,7 @@
 // Service worker: deja la app (HTML/JS/CSS) disponible sin señal.
 // Los datos (patentes, movimientos) viven en IndexedDB, no acá.
 // Al publicar una versión nueva, subí el número de CACHE.
-const CACHE = 'garita-v39';
+const CACHE = 'garita-v40';
 const ARCHIVOS = [
   './',
   'index.html',
@@ -72,6 +72,9 @@ self.addEventListener('push', (e) => {
     icon: 'icons/icon-192.png',
     badge: 'icons/icon-192.png',
     tag: d.tag,
+    renotify: !!d.tag,
+    vibrate: [200, 100, 200],
+    silent: false,
     data: { url: d.url || 'vecino.html' },
   }));
 });
