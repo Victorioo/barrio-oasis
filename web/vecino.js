@@ -496,7 +496,6 @@ function pintarCasa() {
     ? `Hoy ${entradasHoy === 1 ? 'entró 1 visita' : `entraron ${entradasHoy} visitas`} a tu casa.`
     : 'Hoy no entraron visitas a tu casa.';
 
-  $('acceso-autos-total').textContent = plural(autos.length, 'registrado', 'registrados');
   $('total-autos').textContent = plural(autos.length, 'auto', 'autos');
   $('lista-autos').innerHTML = autos.length ? autos.map((a) => `
     <li><span class="auto-icono">${ICONO('car')}</span>
@@ -719,7 +718,7 @@ function ir(tab) {
 document.querySelector('.tabbar').addEventListener('click', (e) => { const b = e.target.closest('[data-ir]'); if (b) ir(b.dataset.ir); });
 $('acceso-visita').addEventListener('click', () => { ir('visitas'); $('v-nombre').focus(); });
 $('ver-todas-visitas').addEventListener('click', () => ir('visitas'));
-$('acceso-autos').addEventListener('click', () => $('seccion-autos').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+$('acceso-datos').addEventListener('click', () => ir('perfil'));
 $('btn-perfil').addEventListener('click', () => ir('perfil'));
 $('btn-perfil-volver').addEventListener('click', () => ir('casa'));
 $('btn-salir').addEventListener('click', salir);
