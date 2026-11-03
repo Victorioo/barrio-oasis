@@ -689,6 +689,8 @@ function ir(tab) {
   window.scrollTo(0, 0);
 }
 document.querySelector('.tabbar').addEventListener('click', (e) => { const b = e.target.closest('[data-ir]'); if (b) ir(b.dataset.ir); });
+$('btn-perfil').addEventListener('click', () => ir('perfil'));
+$('btn-perfil-volver').addEventListener('click', () => ir('casa'));
 $('btn-salir').addEventListener('click', salir);
 
 async function mostrarApp() {
