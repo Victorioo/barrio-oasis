@@ -63,6 +63,7 @@ function pintarPin() {
 
 function mostrarLogin(mensaje = '') {
   $('vista-pin').hidden = true;
+  $('vista-recuperar').hidden = true;
   $('vista-app').hidden = true;
   $('vista-login').hidden = false;
   $('login-error').textContent = mensaje;
@@ -70,17 +71,43 @@ function mostrarLogin(mensaje = '') {
   pintarPin();
 }
 
+// ---------- login: alternar usuario / teléfono ----------
+function modoTelefono() { return !$('campo-tel').hidden; }
+function alternarModoLogin() {
+  const aTelefono = !modoTelefono();
+  $('campo-usuario').hidden = aTelefono;
+  $('campo-tel').hidden = !aTelefono;
+  $('btn-modo-login').textContent = aTelefono ? 'Usar tu usuario' : 'Usar tu teléfono';
+  $('login-error').textContent = '';
+  (aTelefono ? $('l-tel') : $('l-usuario')).focus();
+}
+$('btn-modo-login').addEventListener('click', alternarModoLogin);
+
 async function entrar(e) {
   e.preventDefault();
-  const email = emailDeTelefono($('l-tel').value);
-  if (!email) { $('login-error').textContent = 'Escribí tu teléfono con característica (10 números).'; $('l-tel').focus(); return; }
+  let email = null;
+  if (modoTelefono()) {
+    email = emailDeTelefono($('l-tel').value);
+    if (!email) { $('login-error').textContent = 'Escribí tu teléfono con característica (10 números).'; $('l-tel').focus(); return; }
+  } else {
+    const usuario = $('l-usuario').value.trim();
+    if (!usuario) { $('login-error').textContent = 'Escribí tu usuario.'; $('l-usuario').focus(); return; }
+    if (pin.length < 6) { $('login-error').textContent = 'Ingresá los 6 números del PIN.'; return; }
+    if (!navigator.onLine) { $('login-error').textContent = 'Necesitás señal para ingresar.'; return; }
+    const { data: mail, error: errUsuario } = await sb.rpc('email_de_usuario', { p_usuario: usuario });
+    if (errUsuario) { $('login-error').textContent = 'No hay conexión con el servidor.'; return; }
+    if (!mail) { $('login-error').textContent = 'Usuario o PIN incorrectos.'; pin = ''; pintarPin(); return; }
+    email = mail;
+  }
   if (pin.length < 6) { $('login-error').textContent = 'Ingresá los 6 números del PIN.'; return; }
   if (!navigator.onLine) { $('login-error').textContent = 'Necesitás señal para ingresar.'; return; }
   $('btn-entrar').disabled = true;
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pin });
   $('btn-entrar').disabled = false;
   if (error) {
-    $('login-error').textContent = error.status === 0 || /fetch/i.test(error.message) ? 'No hay conexión con el servidor.' : 'Teléfono o PIN incorrectos.';
+    $('login-error').textContent = error.status === 0 || /fetch/i.test(error.message)
+      ? 'No hay conexión con el servidor.'
+      : (modoTelefono() ? 'Teléfono o PIN incorrectos.' : 'Usuario o PIN incorrectos.');
     pin = ''; pintarPin();
     return;
   }
@@ -93,10 +120,13 @@ async function entrar(e) {
   mostrarApp();
 }
 
-// ---------- primer ingreso: cambiar el PIN ----------
+// ---------- primer ingreso: PIN nuevo, usuario y mail de recuperación ----------
 // Las cuentas se crean todas con el mismo PIN; hasta que el vecino elige el suyo no pasa de esta pantalla.
-// La marca queda en user_metadata.pin_cambiado (es solo para no volver a pedirlo; la seguridad es el PIN).
+// Después se le pide elegir un usuario (reemplaza al teléfono para entrar) y, opcionalmente, un mail
+// para recuperar el PIN si lo llega a olvidar. Nada de esto se vuelve a pedir una vez guardado
+// (pin_cambiado en user_metadata; usuario y email_recuperacion en la fila de la casa).
 let nuevoPin = '', primerPin = '';
+let paso = 'pin1'; // 'pin1' | 'pin2' | 'usuario' | 'email'
 
 function pintarPinNuevo() {
   $('p-puntos').innerHTML = Array.from({ length: 6 }, (_, i) => `<span class="pin-punto ${i < nuevoPin.length ? 'lleno' : ''}"></span>`).join('');
@@ -111,23 +141,77 @@ function tocarTeclaNueva(k) {
 }
 
 const pinDebil = (p) => /^(\d)\1{5}$/.test(p) || '01234567890'.includes(p) || '09876543210'.includes(p);
+const emailValido = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
 
-function mostrarCambioPin() {
+function mostrarVistaPinBase() {
   $('vista-login').hidden = true;
+  $('vista-recuperar').hidden = true;
   $('vista-app').hidden = true;
   $('vista-pin').hidden = false;
-  nuevoPin = ''; primerPin = '';
-  $('p-titulo').textContent = 'Elegí tu nuevo PIN';
-  $('p-seguir').textContent = 'Continuar';
   $('p-error').textContent = '';
+  $('p-seguir').hidden = false;
+}
+
+function mostrarCambioPin() {
+  mostrarVistaPinBase();
+  paso = 'pin1';
+  nuevoPin = ''; primerPin = '';
+  $('p-campo-pin').hidden = false;
+  $('p-campo-usuario').hidden = true;
+  $('p-campo-email').hidden = true;
+  $('p-saltar').hidden = true;
+  $('p-titulo').textContent = 'Elegí tu nuevo PIN';
+  $('p-sub').textContent = 'Al principio todos los vecinos tienen el mismo PIN. Elegí uno solo tuyo, de 6 números, para que nadie más pueda entrar a tu casa.';
+  $('p-seguir').textContent = 'Continuar';
   pintarPinNuevo();
 }
 
-async function seguirCambioPin() {
+function mostrarPasoUsuario() {
+  mostrarVistaPinBase();
+  paso = 'usuario';
+  $('p-campo-pin').hidden = true;
+  $('p-campo-usuario').hidden = false;
+  $('p-campo-email').hidden = true;
+  $('p-saltar').hidden = true;
+  $('p-titulo').textContent = 'Elegí tu usuario';
+  $('p-sub').textContent = 'Lo vas a usar para entrar de ahora en más, en vez del teléfono.';
+  $('p-seguir').textContent = 'Continuar';
+  $('p-usuario').value = '';
+  $('p-usuario').focus();
+}
+
+function mostrarPasoEmail() {
+  mostrarVistaPinBase();
+  paso = 'email';
+  $('p-campo-pin').hidden = true;
+  $('p-campo-usuario').hidden = true;
+  $('p-campo-email').hidden = false;
+  $('p-saltar').hidden = false;
+  $('p-titulo').textContent = 'Mail para recuperar tu PIN';
+  $('p-sub').textContent = 'Si alguna vez te olvidás el PIN, te mandamos un código a este mail para elegir uno nuevo.';
+  $('p-seguir').textContent = 'Guardar';
+  $('p-email').value = '';
+  $('p-email').focus();
+}
+
+// Qué falta después de guardar el PIN: si no hay señal, se entra igual y se vuelve a pedir la próxima vez.
+async function continuarDespuesDePin() {
+  try {
+    const { data } = await sb.rpc('mi_usuario');
+    const info = data?.[0];
+    if (info && !info.usuario) { mostrarPasoUsuario(); return; }
+    if (info && !info.email_recuperacion) { mostrarPasoEmail(); return; }
+  } catch { /* sin señal: seguimos */ }
+  $('vista-pin').hidden = true;
+  mostrarApp();
+}
+
+async function avanzarPin() {
   if (nuevoPin.length < 6) { $('p-error').textContent = 'Ingresá los 6 números.'; return; }
-  if (!primerPin) {
+  if (paso === 'pin1') {
     if (pinDebil(nuevoPin)) { $('p-error').textContent = 'Ese PIN es muy fácil de adivinar. Elegí otro.'; nuevoPin = ''; pintarPinNuevo(); return; }
     primerPin = nuevoPin; nuevoPin = '';
+    paso = 'pin2';
     $('p-titulo').textContent = 'Repetí tu nuevo PIN';
     $('p-seguir').textContent = 'Guardar PIN';
     pintarPinNuevo();
@@ -147,9 +231,43 @@ async function seguirCambioPin() {
     $('p-error').textContent = igual ? 'Tiene que ser distinto del PIN que te dieron. Elegí otro.' : 'No se pudo guardar el PIN. Probá de nuevo.';
     return;
   }
+  await continuarDespuesDePin();
+}
+
+async function avanzarUsuario() {
+  const usuario = $('p-usuario').value.trim().toLowerCase();
+  if (!/^[a-z0-9_.]{3,20}$/.test(usuario)) { $('p-error').textContent = 'Usá entre 3 y 20 letras, números, puntos o guiones bajos (sin espacios ni acentos).'; return; }
+  if (!navigator.onLine) { $('p-error').textContent = 'Necesitás señal para guardar el usuario.'; return; }
+  $('p-seguir').disabled = true;
+  const { error } = await sb.rpc('guardar_usuario', { p_usuario: usuario });
+  $('p-seguir').disabled = false;
+  if (error) {
+    $('p-error').textContent = error.code === '23505' ? 'Ese usuario ya está en uso. Probá otro.' : 'No se pudo guardar. Probá de nuevo.';
+    return;
+  }
+  mostrarPasoEmail();
+}
+
+async function avanzarEmail() {
+  const email = $('p-email').value.trim();
+  if (!email) { $('p-error').textContent = 'Escribí un mail, o tocá "Hacerlo más tarde".'; return; }
+  if (!emailValido(email)) { $('p-error').textContent = 'Revisá el mail.'; return; }
+  if (!navigator.onLine) { $('p-error').textContent = 'Necesitás señal para guardarlo.'; return; }
+  $('p-seguir').disabled = true;
+  const { error } = await sb.rpc('guardar_email_recuperacion', { p_email: email });
+  $('p-seguir').disabled = false;
+  if (error) { $('p-error').textContent = 'No se pudo guardar. Probá de nuevo.'; return; }
   $('vista-pin').hidden = true;
   mostrarApp();
 }
+
+function avanzarPaso() {
+  if (paso === 'pin1' || paso === 'pin2') return avanzarPin();
+  if (paso === 'usuario') return avanzarUsuario();
+  if (paso === 'email') return avanzarEmail();
+}
+
+$('p-saltar').addEventListener('click', () => { $('vista-pin').hidden = true; mostrarApp(); });
 
 function armarTecladoNuevo() {
   const teclas = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
@@ -158,14 +276,116 @@ function armarTecladoNuevo() {
     : k === 'del' ? `<button type="button" class="tecla tecla-borrar" data-k="del" aria-label="Borrar último número">${ICONO('backspace')}</button>`
     : `<button type="button" class="tecla" data-k="${k}">${k}</button>`).join('');
   $('p-teclado').addEventListener('click', (e) => { const b = e.target.closest('[data-k]'); if (b) tocarTeclaNueva(b.dataset.k); });
-  $('p-seguir').addEventListener('click', seguirCambioPin);
+  $('p-seguir').addEventListener('click', avanzarPaso);
+  $('p-usuario').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); avanzarPaso(); } });
+  $('p-email').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); avanzarPaso(); } });
   document.addEventListener('keydown', (e) => {
-    if ($('vista-pin').hidden || e.metaKey || e.ctrlKey) return;
+    if ($('vista-pin').hidden || e.metaKey || e.ctrlKey || paso === 'usuario' || paso === 'email') return;
     if (/^\d$/.test(e.key)) tocarTeclaNueva(e.key);
     else if (e.key === 'Backspace') tocarTeclaNueva('del');
-    else if (e.key === 'Enter') seguirCambioPin();
+    else if (e.key === 'Enter') avanzarPaso();
   });
 }
+
+// ---------- recuperar PIN (vecino ya logueado alguna vez, con usuario y mail guardados) ----------
+let pasoR = 'pedir'; // 'pedir' | 'confirmar'
+let pinR = '', usuarioR = '';
+
+async function llamarRecuperarPin(cuerpo) {
+  const r = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/recuperar-pin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: CONFIG.SUPABASE_ANON_KEY, Authorization: `Bearer ${CONFIG.SUPABASE_ANON_KEY}` },
+    body: JSON.stringify(cuerpo),
+  });
+  return r.json().catch(() => ({ ok: false, error: 'respuesta_invalida' }));
+}
+
+function pintarPinR() {
+  $('r-puntos').innerHTML = Array.from({ length: 6 }, (_, i) => `<span class="pin-punto ${i < pinR.length ? 'lleno' : ''}"></span>`).join('');
+  $('r-puntos').setAttribute('aria-label', `${pinR.length} de 6 números ingresados`);
+}
+function tocarTeclaR(k) {
+  $('r-error').textContent = '';
+  if (k === 'del') pinR = pinR.slice(0, -1);
+  else if (pinR.length < 6) pinR += k;
+  pintarPinR();
+}
+
+function mostrarRecuperar() {
+  $('vista-login').hidden = true;
+  $('vista-pin').hidden = true;
+  $('vista-app').hidden = true;
+  $('vista-recuperar').hidden = false;
+  pasoR = 'pedir'; pinR = ''; usuarioR = '';
+  $('r-titulo').textContent = 'Recuperar tu PIN';
+  $('r-sub').textContent = 'Escribí tu usuario. Si guardaste un mail de recuperación, te mandamos un código.';
+  $('r-campo-usuario').hidden = false;
+  $('r-campo-codigo').hidden = true;
+  $('r-campo-pin').hidden = true;
+  $('r-seguir').textContent = 'Mandar código';
+  $('r-error').textContent = '';
+  $('r-usuario').value = '';
+  pintarPinR();
+  $('r-usuario').focus();
+}
+
+async function pedirCodigoRecuperacion() {
+  usuarioR = $('r-usuario').value.trim();
+  if (!usuarioR) { $('r-error').textContent = 'Escribí tu usuario.'; return; }
+  if (!navigator.onLine) { $('r-error').textContent = 'Necesitás señal para pedir el código.'; return; }
+  $('r-seguir').disabled = true;
+  await llamarRecuperarPin({ paso: 'pedir', usuario: usuarioR }).catch(() => null);
+  $('r-seguir').disabled = false;
+  pasoR = 'confirmar';
+  $('r-sub').textContent = 'Si tu usuario existe y tiene un mail guardado, te llega un código en los próximos minutos. Escribilo junto con tu PIN nuevo.';
+  $('r-campo-usuario').hidden = true;
+  $('r-campo-codigo').hidden = false;
+  $('r-campo-pin').hidden = false;
+  $('r-titulo').textContent = 'Elegí tu PIN nuevo';
+  $('r-seguir').textContent = 'Guardar PIN nuevo';
+  $('r-codigo').value = ''; pinR = ''; pintarPinR();
+  $('r-codigo').focus();
+}
+
+async function confirmarCodigoRecuperacion() {
+  const codigo = $('r-codigo').value.trim();
+  if (!/^\d{6}$/.test(codigo)) { $('r-error').textContent = 'El código tiene 6 números.'; return; }
+  if (pinR.length < 6) { $('r-error').textContent = 'Ingresá los 6 números de tu PIN nuevo.'; return; }
+  if (!navigator.onLine) { $('r-error').textContent = 'Necesitás señal para guardar el PIN.'; return; }
+  $('r-seguir').disabled = true;
+  const resp = await llamarRecuperarPin({ paso: 'confirmar', usuario: usuarioR, codigo, nuevo_pin: pinR }).catch(() => ({ ok: false }));
+  $('r-seguir').disabled = false;
+  if (!resp?.ok) {
+    const MENSAJES = { codigo_invalido: 'Código incorrecto, vencido o ya usado.', pin_debil: 'Ese PIN es muy fácil de adivinar. Elegí otro.' };
+    $('r-error').textContent = MENSAJES[resp?.error] ?? 'No se pudo cambiar el PIN. Probá de nuevo.';
+    pinR = ''; pintarPinR();
+    return;
+  }
+  mostrarLogin('Listo: ya podés entrar con tu usuario y tu PIN nuevo.');
+}
+
+function avanzarRecuperar() { return pasoR === 'pedir' ? pedirCodigoRecuperacion() : confirmarCodigoRecuperacion(); }
+
+function armarTecladoRecuperar() {
+  const teclas = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'];
+  $('r-teclado').innerHTML = teclas.map((k) =>
+    k === '' ? '<span class="tecla-vacia"></span>'
+    : k === 'del' ? `<button type="button" class="tecla tecla-borrar" data-k="del" aria-label="Borrar último número">${ICONO('backspace')}</button>`
+    : `<button type="button" class="tecla" data-k="${k}">${k}</button>`).join('');
+  $('r-teclado').addEventListener('click', (e) => { const b = e.target.closest('[data-k]'); if (b) tocarTeclaR(b.dataset.k); });
+  $('r-seguir').addEventListener('click', avanzarRecuperar);
+  $('r-volver').addEventListener('click', () => mostrarLogin());
+  $('r-usuario').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); avanzarRecuperar(); } });
+  $('r-codigo').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); avanzarRecuperar(); } });
+  document.addEventListener('keydown', (e) => {
+    if ($('vista-recuperar').hidden || e.metaKey || e.ctrlKey || pasoR !== 'confirmar' || document.activeElement === $('r-codigo')) return;
+    if (/^\d$/.test(e.key)) tocarTeclaR(e.key);
+    else if (e.key === 'Backspace') tocarTeclaR('del');
+    else if (e.key === 'Enter') avanzarRecuperar();
+  });
+}
+
+$('link-olvide-pin').addEventListener('click', (e) => { e.preventDefault(); mostrarRecuperar(); });
 
 async function salir() {
   await sb.auth.signOut();
@@ -456,6 +676,16 @@ async function mostrarApp() {
     const { data: { session } } = await sb.auth.getSession();
     if (session?.user?.user_metadata?.pin_cambiado !== true && navigator.onLine) { mostrarCambioPin(); return; }
   } catch { /* sin sesión legible */ }
+  // Cuentas que ya habían cambiado el PIN antes de que existiera el usuario/mail de recuperación:
+  // se les pide una sola vez, igual que en el primer ingreso.
+  if (navigator.onLine) {
+    try {
+      const { data } = await sb.rpc('mi_usuario');
+      const info = data?.[0];
+      if (info && !info.usuario) { mostrarPasoUsuario(); return; }
+      if (info && !info.email_recuperacion) { mostrarPasoEmail(); return; }
+    } catch { /* sin señal: se le vuelve a pedir la próxima vez */ }
+  }
   $('vista-pin').hidden = true;
   $('vista-login').hidden = true;
   $('vista-app').hidden = false;
@@ -476,9 +706,10 @@ async function iniciar() {
   pintarPin();
   armarTecladoNuevo();
   pintarPinNuevo();
+  armarTecladoRecuperar();
   $('form-login').addEventListener('submit', entrar);
   document.addEventListener('keydown', (e) => {
-    if ($('vista-login').hidden || e.metaKey || e.ctrlKey || e.target.id === 'l-tel') return;
+    if ($('vista-login').hidden || e.metaKey || e.ctrlKey || e.target.id === 'l-tel' || e.target.id === 'l-usuario') return;
     if (/^\d$/.test(e.key) && pin.length < 6) { pin += e.key; pintarPin(); }
     else if (e.key === 'Backspace') { pin = pin.slice(0, -1); pintarPin(); }
   });

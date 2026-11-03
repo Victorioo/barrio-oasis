@@ -20,3 +20,6 @@ node_modules/
 # Vercel
 .vercel/
 .vercel
+
+# Supabase CLI (caché local de `supabase link`)
+supabase/.temp/

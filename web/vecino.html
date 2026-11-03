@@ -62,10 +62,14 @@
     </div>
     <form id="form-login" class="login-form" autocomplete="off">
       <div class="login-titulos">
-        <h2>Ingresá a tu casa</h2>
-        <p>Con tu teléfono y el PIN que te dio la administración</p>
+        <h2 id="l-titulo">Ingresá a tu casa</h2>
+        <p id="l-sub">Con tu usuario y el PIN que elegiste</p>
       </div>
-      <div>
+      <div id="campo-usuario">
+        <label class="etiqueta" for="l-usuario">Usuario</label>
+        <input id="l-usuario" class="input" type="text" inputmode="text" autocapitalize="none" autocomplete="username" autocorrect="off" spellcheck="false" placeholder="Tu usuario">
+      </div>
+      <div id="campo-tel" hidden>
         <label class="etiqueta" for="l-tel">Teléfono</label>
         <input id="l-tel" class="input" type="tel" inputmode="tel" autocomplete="tel" placeholder="Ej: 351 555-0142">
       </div>
@@ -73,8 +77,43 @@
       <div id="teclado" class="teclado"></div>
       <p id="login-error" class="error" role="alert"></p>
       <button id="btn-entrar" class="btn btn-primario" type="submit">Entrar</button>
+      <button id="btn-modo-login" class="login-volver" type="button">Usar tu teléfono</button>
+      <a id="link-olvide-pin" class="login-volver" href="#">¿Olvidaste tu PIN?</a>
       <a class="login-volver" href="index.html?entrar">Soy guardia</a>
     </form>
+  </div></main>
+
+  <!-- ============ RECUPERAR PIN ============ -->
+  <main id="vista-recuperar" class="login-fondo" hidden><div class="login">
+    <div class="marca">
+      <span class="logo logo-l"><svg class="i"><use href="#i-shield-check"/></svg></span>
+      <div>
+        <h1 class="marca-titulo">Barrio Oasis</h1>
+        <p class="marca-sub">Seguridad y accesos · Córdoba</p>
+      </div>
+    </div>
+    <div class="login-form">
+      <div class="login-titulos">
+        <h2 id="r-titulo">Recuperar tu PIN</h2>
+        <p id="r-sub">Escribí tu usuario. Si guardaste un mail de recuperación, te mandamos un código.</p>
+      </div>
+      <div id="r-campo-usuario">
+        <label class="etiqueta" for="r-usuario">Usuario</label>
+        <input id="r-usuario" class="input" type="text" inputmode="text" autocapitalize="none" autocomplete="username" autocorrect="off" spellcheck="false" placeholder="Tu usuario">
+      </div>
+      <div id="r-campo-codigo" hidden>
+        <label class="etiqueta" for="r-codigo">Código que te llegó por mail</label>
+        <input id="r-codigo" class="input" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456">
+      </div>
+      <div id="r-campo-pin" hidden>
+        <label class="etiqueta">Elegí tu PIN nuevo</label>
+        <div id="r-puntos" class="pin-puntos" role="status" aria-label="0 de 6 números ingresados"></div>
+        <div id="r-teclado" class="teclado"></div>
+      </div>
+      <p id="r-error" class="error" role="alert"></p>
+      <button id="r-seguir" class="btn btn-primario" type="button">Mandar código</button>
+      <button id="r-volver" class="login-volver" type="button">Volver a entrar</button>
+    </div>
   </div></main>
 
   <!-- ============ CAMBIAR PIN (primer ingreso) ============ -->
@@ -91,10 +130,21 @@
         <h2 id="p-titulo">Elegí tu nuevo PIN</h2>
         <p id="p-sub">Al principio todos los vecinos tienen el mismo PIN. Elegí uno solo tuyo, de 6 números, para que nadie más pueda entrar a tu casa.</p>
       </div>
-      <div id="p-puntos" class="pin-puntos" role="status" aria-label="0 de 6 números ingresados"></div>
-      <div id="p-teclado" class="teclado"></div>
+      <div id="p-campo-pin">
+        <div id="p-puntos" class="pin-puntos" role="status" aria-label="0 de 6 números ingresados"></div>
+        <div id="p-teclado" class="teclado"></div>
+      </div>
+      <div id="p-campo-usuario" hidden>
+        <label class="etiqueta" for="p-usuario">Usuario</label>
+        <input id="p-usuario" class="input" type="text" inputmode="text" autocapitalize="none" autocomplete="username" autocorrect="off" spellcheck="false" maxlength="20" placeholder="Ej: juanp351">
+      </div>
+      <div id="p-campo-email" hidden>
+        <label class="etiqueta" for="p-email">Mail para recuperar tu PIN</label>
+        <input id="p-email" class="input" type="email" inputmode="email" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="tumail@ejemplo.com">
+      </div>
       <p id="p-error" class="error" role="alert"></p>
       <button id="p-seguir" class="btn btn-primario" type="button">Continuar</button>
+      <button id="p-saltar" class="login-volver" type="button" hidden>Hacerlo más tarde</button>
     </div>
   </div></main>
 

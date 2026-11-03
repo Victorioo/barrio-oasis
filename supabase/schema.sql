@@ -237,3 +237,11 @@ create policy consultas_admin on public.consultas_vecinos
 --   trigger trg_consultas_antes_insert -> el servidor pone la casa de cada consulta según la patente
 --   visitas_esperadas: nombre obligatorio, patente opcional
 --   visitas_esperadas.motivo (opcional, hasta 120 caracteres)
+
+-- Migración "usuario_y_recuperacion_pin" (pendiente de correr: ver supabase/migraciones/2026-11_usuario_y_recuperacion_pin.sql):
+--   casas.usuario / email_recuperacion / auth_user_id
+--   recuperaciones_pin  -> códigos de 6 números para recuperar el PIN por mail (solo la Edge Function la toca)
+--   email_de_usuario(usuario) -> resuelve usuario -> mail interno de Auth (anon la necesita para loguearse)
+--   mi_usuario() / guardar_usuario(usuario) / guardar_email_recuperacion(email)
+--   Edge Function recuperar-pin (supabase/functions/recuperar-pin) manda el código por Resend y cambia el PIN.
+--   El teléfono sigue funcionando como entrada alternativa: no se tocó nada de Auth existente.

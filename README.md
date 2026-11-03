@@ -99,3 +99,24 @@ Cuentas de vecinos, visitas autorizadas, panel de sospechosos y fotos de patente
   siempre se ve. Por defecto la garita ve vehículo y casa, y NO ve nombre ni teléfono. Lo que el vecino oculta no llega al celular
   de la garita (no se descarga), y el cambio se aplica en la próxima sincronización (menos de una hora).
 - **Visitas avisadas:** nombre y apellido obligatorios, patente opcional.
+
+## Usuario propio y recuperación de PIN por mail
+
+- **Primer ingreso:** después de elegir el PIN nuevo, se le pide al vecino elegir un **usuario** (3-20 letras,
+  números, puntos o guiones bajos) y, opcionalmente, un **mail de recuperación**. El mail se puede saltear
+  ("Hacerlo más tarde"); el usuario no, porque es lo que va a usar para entrar de ahí en más. Las cuentas que
+  ya habían cambiado el PIN antes de este cambio pasan por este mismo paso una sola vez, la próxima vez que entren.
+- **Login:** el campo principal ahora es el usuario; "Usar tu teléfono" muestra el campo viejo como alternativa
+  (sigue funcionando siempre, incluso después de elegir usuario: el mail interno de Auth nunca cambia).
+- **¿Olvidaste tu PIN?:** si el vecino cargó un mail de recuperación, pide su usuario, le llega un código de 6
+  números por mail (vence a los 15 minutos, máximo 5 intentos) y con eso elige un PIN nuevo. Si no cargó mail,
+  no le llega nada (y no se le avisa explícitamente, para no revelar qué usuarios existen).
+- **Puesta en marcha (una sola vez):**
+  1. **SQL Editor** → pegá y corré `supabase/migraciones/2026-11_usuario_y_recuperacion_pin.sql`.
+  2. Creá una cuenta gratis en [resend.com](https://resend.com) y generá una **API key**. Sin dominio propio
+     verificado, los mails salen desde `onboarding@resend.dev` (funciona, pero conviene verificar un dominio
+     propio más adelante para que no caigan en spam).
+  3. Desplegá la función: `supabase functions deploy recuperar-pin` (o desde el panel, en Edge Functions).
+  4. Cargá el secreto: `supabase secrets set RESEND_API_KEY=re_...` (o Project Settings → Edge Functions → Secrets).
+- **Límite conocido:** si el vecino se equivoca al escribir el mail de recuperación, hoy no hay forma de
+  corregirlo desde la app (se arregla a mano desde Table Editor, columna `casas.email_recuperacion`).
