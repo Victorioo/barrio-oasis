@@ -209,9 +209,15 @@
         <label class="etiqueta" for="v-motivo">Motivo <span class="opcional">(Opcional)</span></label>
         <input id="v-motivo" class="input" type="text" maxlength="120" autocomplete="off" placeholder="Ej: Arreglo de plomería, mudanza">
       </div>
-      <div>
-        <label class="etiqueta" for="v-dia">Día</label>
-        <select id="v-dia" class="input"></select>
+      <div class="form-fila">
+        <div>
+          <label class="etiqueta" for="v-desde">Desde</label>
+          <select id="v-desde" class="input"></select>
+        </div>
+        <div>
+          <label class="etiqueta" for="v-hasta">Hasta</label>
+          <select id="v-hasta" class="input"></select>
+        </div>
       </div>
       <p id="v-error" class="error" role="alert"></p>
       <button class="btn btn-primario" type="submit"><svg class="i"><use href="#i-plus"/></svg>Avisar a la garita</button>

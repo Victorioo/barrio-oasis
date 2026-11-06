@@ -238,10 +238,18 @@ create policy consultas_admin on public.consultas_vecinos
 --   visitas_esperadas: nombre obligatorio, patente opcional
 --   visitas_esperadas.motivo (opcional, hasta 120 caracteres)
 
--- Migración "usuario_y_recuperacion_pin" (pendiente de correr: ver supabase/migraciones/2026-11_usuario_y_recuperacion_pin.sql):
+-- Migración "usuario_y_recuperacion_pin" (ya aplicada en barrio-oasis; ver supabase/migraciones/2026-11_usuario_y_recuperacion_pin.sql):
 --   casas.usuario / email_recuperacion / auth_user_id
 --   recuperaciones_pin  -> códigos de 6 números para recuperar el PIN por mail (solo la Edge Function la toca)
 --   email_de_usuario(usuario) -> resuelve usuario -> mail interno de Auth (anon la necesita para loguearse)
 --   mi_usuario() / guardar_usuario(usuario) / guardar_email_recuperacion(email)
 --   Edge Function recuperar-pin (supabase/functions/recuperar-pin) manda el código por Resend y cambia el PIN.
 --   El teléfono sigue funcionando como entrada alternativa: no se tocó nada de Auth existente.
+
+-- Migración "visitas_varios_dias" (ya aplicada en barrio-oasis; ver supabase/migraciones/2026-11_visitas_varios_dias.sql):
+--   visitas_esperadas.desde/hasta  ->  rango de días de la visita (antes era un solo día: "dia").
+--   La columna "dia" quedó sin usar pero no se borró (había un duplicado viejo en los datos
+--   y no se quiso borrar esa fila); se puede borrar el día que ya no haga falta conservarla.
+--   trigger trg_visitas_evitar_repetida -> rechaza avisar la misma visita (mismo nombre, misma
+--   casa) dos veces si el rango de fechas se superpone con un aviso ya existente (solo mira
+--   avisos nuevos hacia adelante, no revalida el historial).

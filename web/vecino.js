@@ -23,6 +23,7 @@ function etiquetaDia(iso) {
   if (mismo(d, new Date(hoy.getTime() + 864e5))) return 'Mañana';
   return d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' });
 }
+const etiquetaRango = (desde, hasta) => desde === hasta ? etiquetaDia(desde) : `${etiquetaDia(desde)} a ${etiquetaDia(hasta)}`;
 
 // ---------- avisos en pantalla ----------
 let toastT;
@@ -399,7 +400,7 @@ async function cargar() {
   const [c, a, v, ll, co] = await Promise.all([
     sb.rpc('mi_casa'),
     sb.from('vehiculos_vecinos').select('id,patente,marca,modelo,color').order('id'),
-    sb.from('visitas_esperadas').select('id,patente,nombre,motivo,dia').gte('dia', hoy).order('dia'),
+    sb.from('visitas_esperadas').select('id,patente,nombre,motivo,desde,hasta').gte('hasta', hoy).order('desde'),
     sb.rpc('mis_visitas'),
     sb.rpc('mis_consultas'),
   ]);
@@ -476,7 +477,7 @@ function pintarVisitas() {
     ? esperadas.map((v) => `
       <li><div class="fila-datos">
           <p class="fila-quien">${esc(v.nombre)}</p>
-          <p class="fila-det">${v.patente ? `<b>${chapaTxt(v.patente)}</b> · ` : 'Sin patente · '}${esc(etiquetaDia(v.dia))}</p>
+          <p class="fila-det">${v.patente ? `<b>${chapaTxt(v.patente)}</b> · ` : 'Sin patente · '}${esc(etiquetaRango(v.desde, v.hasta))}</p>
           ${v.motivo ? `<p class="fila-det">${esc(v.motivo)}</p>` : ''}
         </div>
         <button class="btn-icono" type="button" data-borrar="${esc(v.id)}" aria-label="Cancelar aviso de ${esc(v.nombre)}">${ICONO('trash')}</button></li>`).join('')
@@ -572,12 +573,19 @@ $('a-eliminar').addEventListener('click', async () => {
 });
 
 // ---------- avisar visitas ----------
+const DIAS_ADELANTE = 30; // hasta cuántos días a futuro se puede elegir en Desde/Hasta
 function llenarDias() {
-  $('v-dia').innerHTML = [0, 1, 2, 3, 4, 5, 6].map((n) => {
+  const opciones = Array.from({ length: DIAS_ADELANTE }, (_, n) => {
     const iso = aISO(new Date(Date.now() + n * 864e5));
     return `<option value="${iso}">${esc(etiquetaDia(iso))}</option>`;
   }).join('');
+  $('v-desde').innerHTML = opciones;
+  $('v-hasta').innerHTML = opciones;
 }
+// Si elegís un "Desde" posterior al "Hasta" actual, empujamos el "Hasta" para que no quede antes.
+$('v-desde').addEventListener('change', () => {
+  if ($('v-hasta').value < $('v-desde').value) $('v-hasta').value = $('v-desde').value;
+});
 
 $('form-visita').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -586,9 +594,14 @@ $('form-visita').addEventListener('submit', async (e) => {
   const patente = normalizarPatente($('v-patente').value) || null; // la patente es opcional
   if (patente && !/^[A-Z0-9]{5,8}$/.test(patente)) { $('v-error').textContent = 'Revisá la patente: tiene que tener entre 5 y 8 letras o números. Si no la sabés, dejala vacía.'; $('v-patente').focus(); return; }
   if (patente && autos.some((a) => a.patente === patente)) { $('v-error').textContent = 'Esa patente ya es de uno de tus autos.'; return; }
+  const desde = $('v-desde').value, hasta = $('v-hasta').value;
+  if (hasta < desde) { $('v-error').textContent = 'La fecha "Hasta" no puede ser anterior a "Desde".'; return; }
   $('v-error').textContent = '';
-  const { error } = await sb.from('visitas_esperadas').insert({ nombre, patente, motivo: $('v-motivo').value.trim() || null, dia: $('v-dia').value });
-  if (error) { toast('No se pudo avisar. Probá de nuevo.', true); return; }
+  const { error } = await sb.from('visitas_esperadas').insert({ nombre, patente, motivo: $('v-motivo').value.trim() || null, desde, hasta });
+  if (error) {
+    $('v-error').textContent = error.code === '23P01' ? 'Ya avisaste a esa visita para esas fechas.' : 'No se pudo avisar. Probá de nuevo.';
+    return;
+  }
   $('v-patente').value = ''; $('v-nombre').value = ''; $('v-motivo').value = '';
   toast('Visita avisada a la garita');
   cargar();
